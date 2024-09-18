@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 from datafarmer.analysis import get_features_info, get_null_proportion
 
-def get_features_info():
+def test_get_features_info():
     df = pd.DataFrame({
         'A': [1, 2, 3, 4],
         'B': ['a', 'b', 'c', 'd'],
@@ -14,7 +14,7 @@ def get_features_info():
 
     assert df_features.shape[0] > 0
 
-def get_null_proportion():
+def test_get_null_proportion():
     df = pd.DataFrame({
         'A': [1, 2, 3, 4],
         'B': ['a', 'b', None, 'd'],

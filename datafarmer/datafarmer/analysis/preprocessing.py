@@ -18,6 +18,7 @@ def get_features_info(df: pd.DataFrame) -> pd.DataFrame:
 
 def get_null_proportion(df: pd.DataFrame) -> pd.DataFrame:
     """return the null proportions information of the given DataFrame.
+    it only returns the columns that have null values proportion greater than 0.0
 
     Args:
         df (pd.DataFrame): input dataframe
@@ -33,4 +34,4 @@ def get_null_proportion(df: pd.DataFrame) -> pd.DataFrame:
         "Null Proportion": null_propoportion
     })
 
-    return null_info(null_propoportion > 0.0)
+    return null_info[null_propoportion > 0.0]
