@@ -21,14 +21,19 @@ def generate_box_plot(df: pd.DataFrame, labels_name: str= None, values_name: str
     df["labels"] = df[labels_name] if labels_name else "all" # if none, it will get "all" as the label
     df["values"] = df[values_name] if values_name else df[df.select_dtypes(include=["float64", "int64"]).columns[0]] # if none, it will take the first numerical column
 
-    categories = df["labels"].unique()
+    categories = df["labels"].sort_values().unique()
     values = [df[df["labels"] == label]["values"] for label in categories]
 
-    fig, ax = plt.subplots(figsize=(10, 7))
+    fig, ax = plt.subplots(figsize=(
+        len(categories)*2, 
+        7
+    ))
+
     box_props = ax.boxplot(
         values, 
         labels=categories, 
         patch_artist=True, 
+        showfliers=False,
         boxprops=dict(facecolor="lightblue", color="black"),
         whiskerprops=dict(color="black"),
         capprops=dict(color="black"),
@@ -43,63 +48,24 @@ def generate_box_plot(df: pd.DataFrame, labels_name: str= None, values_name: str
         lower_quartile = box_props["caps"][i*2].get_ydata()[0]
         upper_quartile = box_props["caps"][i*2+1].get_ydata()[1]
 
+        def add_annotation(y, text, color, offset=0.2):
+            """Helper function to add annotations with dynamic positioning."""
+            ax.text(
+                i + 1, 
+                y + offset, 
+                text, 
+                ha='center', 
+                va='bottom', 
+                color=color, 
+                fontsize=10, 
+                fontweight='bold',
+                bbox=dict(facecolor='white', edgecolor=color, boxstyle='round,pad=0.3'))
+
         # Add text annotations
-        plt.text(
-            i + 1, 
-            median, 
-            f"Median: {median:.2f}", 
-            ha="center", 
-            va="bottom", 
-            color="darkred", 
-            fontsize=10, 
-            fontweight="bold", 
-            bbox=dict(facecolor="white", edgecolor="darkred", boxstyle="round,pad=0.3")
-        )
-
-        plt.text(
-            i + 1, 
-            lower_quartile, 
-            f"Q1: {lower_quartile:.2f}", 
-            ha="center", 
-            va="top", 
-            color="darkblue", 
-            fontsize=10, 
-            fontweight="bold", 
-            bbox=dict(facecolor="white", edgecolor="darkblue", boxstyle="round,pad=0.3")
-        )
-
-        plt.text(
-            i + 1, 
-            upper_quartile, 
-            f"Q3: {upper_quartile:.2f}", 
-            ha="center", 
-            va="bottom", 
-            color="darkblue", 
-            fontsize=10, 
-            fontweight="bold", 
-            bbox=dict(facecolor="white", edgecolor="darkblue", boxstyle="round,pad=0.3")
-        )
-
-        plt.text(
-            i + 1, 
-            lower_whisker, 
-            f"Lower Whisker: {lower_whisker:.2f}", 
-            ha="center", 
-            va="bottom", 
-            color="black", 
-            fontsize=9, bbox=dict(facecolor="lightyellow", edgecolor="black", boxstyle="round,pad=0.3")
-        )
-
-        plt.text(
-            i + 1, 
-            upper_whisker, 
-            f"Upper Whisker: {upper_whisker:.2f}", 
-            ha="center", 
-            va="top", 
-            color="black", 
-            fontsize=9, 
-            bbox=dict(facecolor="lightyellow", edgecolor="black", boxstyle="round,pad=0.3")
-        )
+        add_annotation(median, f'Median: {median:.2f}', 'darkred', offset=0.1)
+        add_annotation(lower_quartile, f'Q1: {lower_quartile:.2f}', 'darkblue', offset=-0.1)
+        add_annotation(upper_quartile, f'Q3: {upper_quartile:.2f}', 'darkblue', offset=0.1)
+        
     
     ax.set_title(f"Boxplot by {labels_name} and {values_name}")
     ax.set_xlabel(labels_name)
