@@ -100,7 +100,12 @@ def generate_pair_plot(df: pd.DataFrame) -> plt.figure:
 
     Args:
         df (pd.DataFrame): input dataframe
+
+    Returns:
+        plt.figure: pair plot figure
     """
+
+    assert isinstance(df, pd.DataFrame), "data must be a pandas DataFrame"
 
     # force a target column with 1 value
     if "target" not in df.columns:
