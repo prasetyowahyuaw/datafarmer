@@ -41,12 +41,13 @@ def generate_box_plot(df: pd.DataFrame, labels_name: str= None, values_name: str
     )
 
     for i, box in enumerate(box_props["boxes"]):
+
         # Get box properties
         median = box_props["medians"][i].get_ydata()[0]
         lower_whisker = box_props["whiskers"][i*2].get_ydata()[1]
         upper_whisker = box_props["whiskers"][i*2+1].get_ydata()[1]
-        lower_quartile = box_props["caps"][i*2].get_ydata()[0]
-        upper_quartile = box_props["caps"][i*2+1].get_ydata()[1]
+        lower_quartile = box_props["boxes"][i].get_path().vertices[0,1]
+        upper_quartile = box_props["boxes"][i].get_path().vertices[2,1]
 
         def add_annotation(y, text, color, offset=0.2):
             """Helper function to add annotations with dynamic positioning."""
@@ -63,9 +64,10 @@ def generate_box_plot(df: pd.DataFrame, labels_name: str= None, values_name: str
 
         # Add text annotations
         add_annotation(median, f'Median: {median:.2f}', 'darkred', offset=0.1)
-        add_annotation(lower_quartile, f'Q1: {lower_quartile:.2f}', 'darkblue', offset=-0.1)
+        add_annotation(lower_quartile, f'Q1: {lower_quartile:.2f}', 'darkblue', offset=-0.2)
         add_annotation(upper_quartile, f'Q3: {upper_quartile:.2f}', 'darkblue', offset=0.1)
-        
+        add_annotation(lower_whisker, f'Lower : {lower_whisker:.2f}', 'darkblue', offset=-0.2)
+        add_annotation(upper_whisker, f'Upper : {upper_whisker:.2f}', 'darkblue', offset=0.1)
     
     ax.set_title(f"Boxplot by {labels_name} and {values_name}")
     ax.set_xlabel(labels_name)
