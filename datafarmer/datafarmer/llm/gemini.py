@@ -16,10 +16,6 @@ from datetime import datetime
 import warnings
 warnings.filterwarnings("ignore")
 
-
-class CustomException(Exception):
-    pass
-
 class Gemini:
     def __init__(
         self,
@@ -74,7 +70,7 @@ class Gemini:
             json_text = match[-1].strip()
             return json.loads(json_text)
 
-    @retry(wait=wait_fixed(2), stop=stop_after_attempt(2), retry=retry_if_exception_type(CustomException))
+    @retry(wait=wait_fixed(60), stop=stop_after_attempt(3), retry=retry_if_exception_type(Exception))
     async def get_async_generation_response(self, prompt: str) -> str:
         """return generation text from the prompt
 
@@ -111,10 +107,8 @@ class Gemini:
                 try:
                     response = await task
                     result.append((i, response))
-                except CustomException as e:
-                    logger.warning(f"Error in processing the item {i+1}, after all the retries")
                 except Exception as e:
-                    logger.error(f"Unexpected error item {i+1}")
+                    logger.warning(f"Error in processing the item {i+1}, after all the retries")
                 finally:
                     pbar.update(1)
 

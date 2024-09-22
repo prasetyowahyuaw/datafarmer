@@ -21,17 +21,17 @@ def gemini():
     this command will generate llm output from bigquery data
     """
 
-    print(":ear_of_rice: [bold green]Datafarmer Gemini[/bold green] :ear_of_rice: \n[grey70]Generating llm output from bigquery data. Please enter the required below[/grey70]")
-    project_id = Prompt.ask("[grey70]- Enter the google project id :pray:[/grey70]")
-    table_name = Prompt.ask("[grey70]- Enter the table name with the dataset :pray:[/grey70]")
-    destination_name = Prompt.ask("[grey70]- Enter the destination dataset and table name for the output :pray: (blank for default)[/grey70]")
-    print("[grey70]Thanks, let me help you :rocket:[/grey70]")
+    print(":ear_of_rice: [bold green]Datafarmer Gemini[/bold green] :ear_of_rice: \n[cyan1]Generating llm output from bigquery data. Please enter the required below[/cyan1]")
+    project_id = Prompt.ask("[cyan1]- Enter the google project id :pray:[/cyan1]")
+    table_name = Prompt.ask("[cyan1]- Enter the table name with the dataset :pray:[/cyan1]")
+    destination_name = Prompt.ask("[cyan1]- Enter the destination dataset and table name for the output :pray: (blank for default)[/cyan1]")
+    print("[cyan1]Thanks, let me help you :rocket:[/cyan1]")
 
     logger.info(f"Load data from bigquery `{project_id}`.`{table_name}`")
     try:
         
         # read data from bigquery
-        data = read_bigquery(query=f"SELECT case_number, prompt FROM `{project_id}`.`{table_name}` LIMIT 5", project_id=project_id)
+        data = read_bigquery(query=f"SELECT * FROM `{project_id}`.`{table_name}`", project_id=project_id)
         logger.info(f"Data loaded from bigquery")
 
         # generation process
