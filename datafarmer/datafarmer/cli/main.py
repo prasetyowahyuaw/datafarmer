@@ -21,11 +21,11 @@ def gemini():
     this command will generate llm output from bigquery data
     """
 
-    print(":ear_of_rice: [bold green]Datafarmer Gemini[/bold green] :ear_of_rice: \nGenerating llm output from bigquery data. Please enter the required below")
-    project_id = Prompt.ask("- Enter the google project id :pray:")
-    table_name = Prompt.ask("- Enter the table name with the dataset :pray:")
-    destination_name = Prompt.ask("- Enter the destination dataset and table name for the output :pray: (blank for default)")
-    print("[blue]Thanks, let me help you :rocket:[/blue]")
+    print(":ear_of_rice: [bold green]Datafarmer Gemini[/bold green] :ear_of_rice: \n[grey70]Generating llm output from bigquery data. Please enter the required below[/grey70]")
+    project_id = Prompt.ask("[grey70]- Enter the google project id :pray:[/grey70]")
+    table_name = Prompt.ask("[grey70]- Enter the table name with the dataset :pray:[/grey70]")
+    destination_name = Prompt.ask("[grey70]- Enter the destination dataset and table name for the output :pray: (blank for default)[/grey70]")
+    print("[grey70]Thanks, let me help you :rocket:[/grey70]")
 
     logger.info(f"Load data from bigquery `{project_id}`.`{table_name}`")
     try:
