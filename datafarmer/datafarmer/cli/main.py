@@ -11,8 +11,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 @app.command()
-def test(text: str):
-    typer.echo(f"Testing with text: {text}")
+def test():
+    """test the cli command"""
+    print(f"Yay! the :ear_of_rice: [bold green]Datafarmer Gemini[/bold green] :ear_of_rice: cli command is working :rocket:")
 
 @app.command()
 def gemini():
@@ -20,10 +21,10 @@ def gemini():
     this command will generate llm output from bigquery data
     """
 
-    print(":ear_of_rice: [bold green]Datafarmer Gemini[/bold green] :ear_of_rice: \n[blue]Generating llm output from bigquery data. Please enter the required below[/blue]")
-    project_id = Prompt.ask("[blue]- Enter the google project id[/blue] :pray:")
-    table_name = Prompt.ask("[blue]- Enter the table name with the dataset[/blue] :pray:")
-    destination_name = Prompt.ask("[blue]- Enter the destination dataset and table name for the output[/blue] :pray: (blank for default)")
+    print(":ear_of_rice: [bold green]Datafarmer Gemini[/bold green] :ear_of_rice: \nGenerating llm output from bigquery data. Please enter the required below")
+    project_id = Prompt.ask("- Enter the google project id :pray:")
+    table_name = Prompt.ask("- Enter the table name with the dataset :pray:")
+    destination_name = Prompt.ask("- Enter the destination dataset and table name for the output :pray: (blank for default)")
     print("[blue]Thanks, let me help you :rocket:[/blue]")
 
     logger.info(f"Load data from bigquery `{project_id}`.`{table_name}`")
