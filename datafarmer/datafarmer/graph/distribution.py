@@ -61,13 +61,13 @@ def generate_box_plot(df: pd.DataFrame, labels_name: str= None, values_name: str
                 fontsize=8, 
                 fontweight='bold',
                 bbox=dict(facecolor='white', edgecolor=color, boxstyle='round,pad=0.3'))
-
+            
         # Add text annotations
-        add_annotation(median, f'Median: {median:.2f}', 'darkred', offset=0.1)
-        add_annotation(lower_quartile, f'Q1: {lower_quartile:.2f}', 'darkblue', offset=-0.2)
-        add_annotation(upper_quartile, f'Q3: {upper_quartile:.2f}', 'darkblue', offset=0.1)
-        add_annotation(lower_whisker, f'Lower : {lower_whisker:.2f}', 'grey', offset=-0.2)
-        add_annotation(upper_whisker, f'Upper : {upper_whisker:.2f}', 'grey', offset=0.1)
+        add_annotation(median, f'Median: {median:.2f}', 'darkred', offset=0)
+        add_annotation(lower_quartile, f'Q1: {lower_quartile:.2f}', 'darkblue', offset=0)
+        add_annotation(upper_quartile, f'Q3: {upper_quartile:.2f}', 'darkblue', offset=0)
+        add_annotation(lower_whisker, f'Lower : {lower_whisker:.2f}', 'grey', offset=0)
+        add_annotation(upper_whisker, f'Upper : {upper_whisker:.2f}', 'grey', offset=0)
     
     ax.set_title(f"Boxplot by {labels_name} and {values_name}")
     ax.set_xlabel(labels_name)

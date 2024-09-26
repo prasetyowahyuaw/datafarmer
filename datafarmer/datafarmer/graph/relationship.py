@@ -26,30 +26,41 @@ def plot_single_pair(
     # plot distribution histogram if the feature are the same (diagonal of the pair-plot)
     if feature_i_1 == feature_i_2:
         tdf = pd.DataFrame(
-        X[:, [feature_i_1]], 
-        columns=[features[feature_i_1]])
+            X[:, [feature_i_1]], 
+            columns=[features[feature_i_1]]
+        )
         tdf["target"] = y
         ax[feature_i_1, feature_i_2].hist(tdf[features[feature_i_1]], bins=30)
     
     else:
         # otherwise plot the pair-wise scatter plot
         tdf = pd.DataFrame(
-        X[:, [feature_i_1, feature_i_2]], 
-        columns=[features[feature_i_1], features[feature_i_2]])
+            X[:, [feature_i_1, feature_i_2]], 
+            columns=[features[feature_i_1], features[feature_i_2]]
+        )
         tdf["target"] = y
 
         # calculate linear regression
         slope, intercept, r_value, p_value, std_err = stats.linregress(
-        tdf[features[feature_i_2]].astype(float),
-        tdf[features[feature_i_1]].astype(float))
+            tdf[features[feature_i_2]].astype(float),
+            tdf[features[feature_i_1]].astype(float)
+        )
         line = slope*tdf[features[feature_i_2]]+intercept
 
         # plot scatter plot and regression line
         ax[feature_i_1, feature_i_2].scatter(
-        x=tdf[features[feature_i_2]],
-        y=tdf[features[feature_i_1]]
+            x=tdf[features[feature_i_2]],
+            y=tdf[features[feature_i_1]]
         )
-        ax[feature_i_1, feature_i_2].plot(tdf[features[feature_i_2]],line,"r-",label="Regression line")
+
+        line_color = "red" if r_value**2 > 0.3 else "lightgrey"
+        ax[feature_i_1, feature_i_2].plot(
+            tdf[features[feature_i_2]],
+            line,
+            "r-",
+            label="Regression line",
+            color=line_color
+        )
 
         # add r-quared and the equation value label
         r_squared = r_value**2
