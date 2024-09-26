@@ -145,6 +145,33 @@ class Gemini:
 
         return pd.DataFrame(responses, columns=["id", "result"])
 
+    async def generate_async_from_dataframe(self, data: pd.DataFrame) -> pd.DataFrame:
+        """if the async loop already run, generate the responses and return the dataframe
+
+        Args:
+            data (pd.DataFrame): dataframe with prompts
+
+        Returns:
+            pd.DataFrame: dataframe contains generation result only
+        """
+
+        # assertion checks to the data
+        logger.info("Starting for generation")
+
+        assert isinstance(data, pd.DataFrame), "data should be a pandas dataframe"
+        assert "prompt" in data.columns, "data should have a column named 'prompt'"
+
+        if "id" not in data.columns:
+            data = data.reset_index().rename(columns={"index": "id"})
+            logger.warning("Data doesn't have 'id' column, so added the index as 'id' column")
+
+        self.data = data
+
+        responses = await self.run_async_generation()
+        success_rate = len(responses) / len(data)
+        logger.info(f"Generation Finished, Success rate: {success_rate:.2%} ({len(responses)}/{len(data)})")
+
+        return pd.DataFrame(responses, columns=["id", "result"])
 
 
 
