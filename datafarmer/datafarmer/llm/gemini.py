@@ -136,7 +136,10 @@ class Gemini:
 
         self.data = data
 
-        responses = asyncio.run(self.run_async_generation())
+        # get event loop for async
+        loop = asyncio.get_event_loop()
+
+        responses = loop.run_until_complete(self.run_async_generation())
         success_rate = len(responses) / len(data)
         logger.info(f"Generation Finished, Success rate: {success_rate:.2%} ({len(responses)}/{len(data)})")
 
