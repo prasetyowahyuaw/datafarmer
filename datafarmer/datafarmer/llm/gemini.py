@@ -60,24 +60,6 @@ class Gemini:
             return True
         except RuntimeError:
             return False
-    
-    def parse_text(self, text: str, format: str="json") -> Dict:
-        """parses the response text from the generative response
-
-        Args:
-            response (str): response string
-            format (str, optional): the format of the response. Defaults to "json".
-        Returns:
-            Dict: parsed text
-        """
-        
-        assert format in ["json"], f"Invalid format. currently doesn't support {format} format"
-
-        if format == "json":
-            # capture the json markdown code block
-            match = re.findall(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
-            json_text = match[-1].strip()
-            return json.loads(json_text)
 
     @retry(wait=wait_fixed(60), stop=stop_after_attempt(3), retry=retry_if_exception_type(Exception))
     async def get_async_generation_response(self, id:str, prompt: str) -> Tuple[int, str]:
