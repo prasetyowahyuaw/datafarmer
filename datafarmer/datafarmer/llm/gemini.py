@@ -50,7 +50,7 @@ class Gemini:
 
     @retry(
         wait=wait_fixed(90), 
-        stop=stop_after_attempt(5), 
+        stop=stop_after_attempt(2), 
         retry=retry_if_exception_type(Exception),
     )
     async def get_async_generation_response(self, id:str, prompt: str) -> Tuple[str, str]:
@@ -62,21 +62,16 @@ class Gemini:
         Returns:
             str: response text
         """
-        try:
-            assert prompt is not None and len(prompt) > 0, "Prompt cannot be empty."
+        assert prompt is not None and len(prompt) > 0, "Prompt cannot be empty."
 
-            response = await self.generative_model.generate_content_async(
-                    [prompt],
-                    generation_config=self.generation_config,
-                    safety_settings=self.safety_settings,
-                    stream=False
-                )
-                
-            return id, response.text
-
-        except Exception as e:
-            logger.error(f"🚧 Error processing prompt id {id}: {str(e)}")
-            raise
+        response = await self.generative_model.generate_content_async(
+                [prompt],
+                generation_config=self.generation_config,
+                safety_settings=self.safety_settings,
+                stream=False
+            )
+            
+        return id, response.text
         
     async def _run_async_generation(self, data: pd.DataFrame) -> List[Tuple[str, str]]:
         """running the list of async generation responses and return the list of responses
@@ -85,16 +80,25 @@ class Gemini:
             List: list of generation responses in tuple format (index, response)
         """ 
 
-        tasks = [self.get_async_generation_response(id=row.id, prompt=row.prompt) for row in data.itertuples()]
+        tasks = [
+            (
+                row.id, 
+                self.get_async_generation_response(id=row.id, prompt=row.prompt)
+            ) 
+            for row in data.itertuples()
+        ]
         results = []
 
         with tqdm(total=len(tasks), desc="Generating", unit="Item") as pbar:
-            for i, task in enumerate(asyncio.as_completed(tasks)):
+            for completed_task in asyncio.as_completed([task for _, task in tasks]):
                 try:
-                    id, response = await task
+                    id, response = await completed_task
                     results.append((id, response))
                 except Exception as e:
-                    logger.warning(f"🚧 Failed to process id {data[['id']].iloc[i].values[0]}, after all the retries, Error: {str(e)}")
+                    for original_id, task in tasks:
+                        if task == completed_task:
+                            logger.warning(f"🚧 Failed to process id {original_id}, after all the retries, Error: {str(e)}")
+                            break
                 finally:
                     pbar.update(1)
 
