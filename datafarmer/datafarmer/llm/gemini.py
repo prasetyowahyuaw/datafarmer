@@ -5,9 +5,10 @@ import pandas as pd
 from typing import List, Tuple, Optional
 
 from datafarmer.utils import logger
+import logging
 
 import asyncio
-from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt
+from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt, after_log, before_log
 from tqdm.asyncio import tqdm
 
 import warnings
@@ -48,7 +49,13 @@ class Gemini:
 
         )
 
-    @retry(wait=wait_fixed(60), stop=stop_after_attempt(3), retry=retry_if_exception_type(Exception))
+    @retry(
+        wait=wait_fixed(60), 
+        stop=stop_after_attempt(3), 
+        retry=retry_if_exception_type(Exception),
+        before=before_log(logger, logging.DEBUG),  
+        after=after_log(logger, logging.DEBUG),
+    )
     async def get_async_generation_response(self, id:str, prompt: str) -> Tuple[str, str]:
         """return generation text from the given prompt
 
@@ -58,16 +65,21 @@ class Gemini:
         Returns:
             str: response text
         """
-        assert prompt is not None and len(prompt) > 0, "Prompt cannot be empty."
+        try:
+            assert prompt is not None and len(prompt) > 0, "Prompt cannot be empty."
 
-        response = await self.generative_model.generate_content_async(
-                [prompt],
-                generation_config=self.generation_config,
-                safety_settings=self.safety_settings,
-                stream=False
-            )
-            
-        return id, response.text
+            response = await self.generative_model.generate_content_async(
+                    [prompt],
+                    generation_config=self.generation_config,
+                    safety_settings=self.safety_settings,
+                    stream=False
+                )
+                
+            return id, response.text
+
+        except Exception as e:
+            logger.error(f"🚧 Error processing prompt id {id}: {str(e)}")
+            raise
         
     async def _run_async_generation(self, data: pd.DataFrame) -> List[Tuple[str, str]]:
         """running the list of async generation responses and return the list of responses
@@ -85,7 +97,7 @@ class Gemini:
                     id, response = await task
                     results.append((id, response))
                 except Exception as e:
-                    logger.warning(f"🚧 Error in processing the item {i+1}, after all the retries")
+                    logger.warning(f"🚧 Failed to process id {id}, after all the retries, Error: {str(e)}")
                 finally:
                     pbar.update(1)
 
