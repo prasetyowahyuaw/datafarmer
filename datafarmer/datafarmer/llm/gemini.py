@@ -49,7 +49,7 @@ class Gemini:
         )
 
     @retry(
-        wait=wait_random_exponential(multiplier=1, max=120), 
+        wait=wait_fixed(90), 
         stop=stop_after_attempt(5), 
         retry=retry_if_exception_type(Exception),
     )
