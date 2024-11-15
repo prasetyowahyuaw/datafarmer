@@ -5,10 +5,9 @@ import pandas as pd
 from typing import List, Tuple, Optional
 
 from datafarmer.utils import logger
-import logging
 
 import asyncio
-from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt, after_log, before_log
+from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt, wait_random_exponential
 from tqdm.asyncio import tqdm
 
 import warnings
@@ -50,11 +49,9 @@ class Gemini:
         )
 
     @retry(
-        wait=wait_fixed(60), 
-        stop=stop_after_attempt(3), 
+        wait=wait_random_exponential(multiplier=1, max=120), 
+        stop=stop_after_attempt(5), 
         retry=retry_if_exception_type(Exception),
-        before=before_log(logger, logging.DEBUG),  
-        after=after_log(logger, logging.DEBUG),
     )
     async def get_async_generation_response(self, id:str, prompt: str) -> Tuple[str, str]:
         """return generation text from the given prompt
