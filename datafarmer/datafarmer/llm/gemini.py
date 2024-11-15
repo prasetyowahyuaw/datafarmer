@@ -94,7 +94,7 @@ class Gemini:
                     id, response = await task
                     results.append((id, response))
                 except Exception as e:
-                    logger.warning(f"🚧 Failed to process id {id}, after all the retries, Error: {str(e)}")
+                    logger.warning(f"🚧 Failed to process id {data[['id']].iloc[i].values[0]}, after all the retries, Error: {str(e)}")
                 finally:
                     pbar.update(1)
 
