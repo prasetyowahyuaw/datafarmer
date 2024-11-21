@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def test_gemini_class():
-    gemini = Gemini(project_id="your_project_id")
+    gemini = Gemini(project_id="xxxx-xxx-xx")
     data = pd.DataFrame(
         {
             "prompt":
@@ -27,6 +27,7 @@ def test_gemini_class():
     )
 
     result = gemini.generate_from_dataframe(data)
+    result_2 = gemini.generate_from_dataframe(data)
     print(result)
 
     assert isinstance(result, pd.DataFrame)

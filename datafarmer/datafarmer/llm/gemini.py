@@ -149,7 +149,13 @@ class Gemini:
         if asyncio.get_event_loop().is_running():
             logger.error("🛑 Use `await generate_async_from_dataframe()` instead")
             raise RuntimeError("Async event loop is already running")
+        
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
-        return asyncio.run(self.generate_async_from_dataframe(data))
+        return loop.run_until_complete(self.generate_async_from_dataframe(data))
 
 
