@@ -54,7 +54,7 @@ class Gemini:
         stop=stop_after_attempt(2), 
         retry=retry_if_exception_type(Exception),
     )
-    async def get_async_generation_response(self, id:str, prompt: str) -> Tuple[str, str]:
+    async def _get_async_generation_response(self, id:str, prompt: str) -> Tuple[str, str]:
         """return generation text from the given prompt
 
         Args:
@@ -65,14 +65,18 @@ class Gemini:
         """
         assert prompt is not None and len(prompt) > 0, "Prompt cannot be empty."
 
-        response = await self.generative_model.generate_content_async(
-                [prompt],
-                generation_config=self.generation_config,
-                safety_settings=self.safety_settings,
-                stream=False
-            )
-            
-        return id, response.text
+        try:
+            response = await self.generative_model.generate_content_async(
+                    [prompt],
+                    generation_config=self.generation_config,
+                    safety_settings=self.safety_settings,
+                    stream=False
+                )
+                
+            return id, response.text, True
+        
+        except Exception as e:
+            return id, f"Error: {str(e)}", False
         
     async def _run_async_generation(self, data: pd.DataFrame) -> List[Tuple[str, str]]:
         """running the list of async generation responses and return the list of responses
@@ -84,7 +88,7 @@ class Gemini:
         tasks = [
             (
                 row.id, 
-                self.get_async_generation_response(id=row.id, prompt=row.prompt)
+                self._get_async_generation_response(id=row.id, prompt=row.prompt)
             ) 
             for row in data.itertuples()
         ]
@@ -92,13 +96,14 @@ class Gemini:
 
         with tqdm(total=len(tasks), desc="Generating", unit="Item") as pbar:
             for completed_task in asyncio.as_completed([task for _, task in tasks]):
-                current_id = None
                 try:
-                    id, response = await completed_task
-                    current_id = id
-                    results.append((id, response))
+                    id, response, is_succeded = await completed_task
+                    if is_succeded:
+                        results.append((id, response))
+                    else:
+                        logger.warning(f"🚧 Failed to process id: {id}")
                 except Exception as e:
-                    logger.warning(f"🚧 Failed to process id {current_id}, after all the retries, Error: {str(e)}")       
+                    logger.error(f"🛑 Error while generating: {str(e)}")       
                 finally:
                     pbar.update(1)
 
