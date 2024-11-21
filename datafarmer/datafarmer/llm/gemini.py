@@ -30,6 +30,7 @@ class Gemini:
             generation_config (Optional[GenerationConfig], optional): generation config. Defaults to None.
             safety_settings (Optional[SafetySetting], optional): gemini generation safety settings. Defaults to None.
             system_instruction (Optional[str], optional): initial instruction in gemini. Defaults to None.
+            retry_sleep (int, optional): retry sleep time. Defaults to 90.
         """
 
         vertexai.init(project=project_id)
@@ -49,7 +50,7 @@ class Gemini:
         )
 
     @retry(
-        wait=wait_fixed(90), 
+        wait=wait_fixed(60), 
         stop=stop_after_attempt(2), 
         retry=retry_if_exception_type(Exception),
     )
@@ -91,14 +92,13 @@ class Gemini:
 
         with tqdm(total=len(tasks), desc="Generating", unit="Item") as pbar:
             for completed_task in asyncio.as_completed([task for _, task in tasks]):
+                current_id = None
                 try:
                     id, response = await completed_task
+                    current_id = id
                     results.append((id, response))
                 except Exception as e:
-                    for original_id, task in tasks:
-                        if task == completed_task:
-                            logger.warning(f"🚧 Failed to process id {original_id}, after all the retries, Error: {str(e)}")
-                            break
+                    logger.warning(f"🚧 Failed to process id {current_id}, after all the retries, Error: {str(e)}")       
                 finally:
                     pbar.update(1)
 
