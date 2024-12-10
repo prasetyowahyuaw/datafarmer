@@ -7,7 +7,7 @@ from googleapiclient.http import MediaInMemoryUpload
 
 def write_gdrive_file(data: pd.DataFrame, file_name: str, project_id: str) -> dict:
     """
-    writes a pandas dataframe to a Google Drive file. and return id
+    writes a pandas dataframe to a Google Drive file. and return dictionary contains id and url
     """
     creds, project = google.auth.default(
         scopes=['https://www.googleapis.com/auth/drive.file'],
