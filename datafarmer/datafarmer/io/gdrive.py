@@ -5,7 +5,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaInMemoryUpload
 
-def write_gdrive_file(data: pd.DataFrame, file_name: str, project_id: str) -> dict:
+def write_gdrive_file(data: pd.DataFrame, file_name: str, folder_id: str, project_id: str) -> dict:
     """
     writes a pandas dataframe to a Google Drive file. and return dictionary contains id and url
     """
@@ -25,6 +25,7 @@ def write_gdrive_file(data: pd.DataFrame, file_name: str, project_id: str) -> di
     file_metadata = {
         "name": file_name,
         "mimeType": "text/csv",
+        "parents": [folder_id]
     }
 
     media = MediaInMemoryUpload(

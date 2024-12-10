@@ -15,7 +15,7 @@ def test_write_gdrive_file():
     })
 
     
-    id = write_gdrive_file(data, "test.csv", "test_project_id")
+    id = write_gdrive_file(data, "test.csv", "your folder id", "your project id")
     assert id is not None
 
     
