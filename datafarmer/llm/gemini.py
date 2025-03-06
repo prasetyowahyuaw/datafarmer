@@ -1,0 +1,211 @@
+import vertexai
+from vertexai.generative_models import (
+    GenerativeModel,
+    GenerationConfig,
+    SafetySetting,
+    Tool,
+)
+import pandas as pd
+from typing import List, Tuple, Optional
+from itertools import chain
+from datafarmer.utils import logger
+from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt
+import asyncio
+from tqdm.asyncio import tqdm
+
+import warnings
+
+warnings.filterwarnings("ignore")
+
+
+class Gemini:
+    def __init__(
+        self,
+        project_id: str,
+        gemini_version: str = "gemini-1.5-flash",
+        generation_config: Optional[GenerationConfig] = None,
+        safety_settings: Optional[SafetySetting] = None,
+        system_instruction: Optional[str] = None,
+        tools: Optional[Tool] = None,
+    ):
+        """initialize the Gemini class
+
+        Args:
+            project_id (str): google project id
+            gemini_version (str, optional): gemini version. Defaults to "gemini-1.5-flash".
+            generation_config (Optional[GenerationConfig], optional): generation config. Defaults to None.
+            safety_settings (Optional[SafetySetting], optional): gemini generation safety settings. Defaults to None.
+            system_instruction (Optional[str], optional): initial instruction in gemini. Defaults to None.
+            tool (Optional[Tool], optional): tool for the generation. Defaults to None.
+        """
+
+        vertexai.init(project=project_id)
+
+        self.project_id = project_id
+        self.gemini_version = gemini_version
+        self.generation_config = generation_config
+        self.safety_settings = safety_settings
+        self.system_instruction = system_instruction
+        self.tools = tools
+
+        self.generative_model = GenerativeModel(
+            model_name=gemini_version,
+            generation_config=generation_config,
+            safety_settings=safety_settings,
+            system_instruction=system_instruction,
+            tools=tools,
+        )
+
+    @retry(
+        wait=wait_fixed(60),
+        stop=stop_after_attempt(2),
+        retry=retry_if_exception_type(Exception),
+    )
+    async def _get_async_generation_response_with_retry(
+        self, 
+        id: str, 
+        prompt: str
+    ) -> Tuple[str, str, bool]:
+        """return generation text from the given prompt with retry
+
+        Args:
+            id (str): the id of the prompt
+            prompt (str): prompt that needs to be generated
+
+        Returns:
+            Tuple[str, str]: it returns the id, generation response and the boolean value if the generation is successful
+        """
+
+        response = await self.generative_model.generate_content_async(
+            [prompt],
+            generation_config=self.generation_config,
+            safety_settings=self.safety_settings,
+            stream=False,
+        )
+
+        return id, response.text, True
+
+    async def _get_async_generation_response(
+        self, 
+        id: str, 
+        prompt: str
+    ) -> Tuple[str, str, bool]:
+        """return generation text from the given prompt
+
+        Args:
+            id (str): id of the prompt
+            prompt (str): prompt text
+        Returns:
+            Tuple[str, str, bool]: it returns the id, generation response and the boolean value if the generation is successful
+        """
+        assert prompt is not None and len(prompt) > 0, "Prompt cannot be empty."
+
+        try:
+            return await self._get_async_generation_response_with_retry(id, prompt)
+        except Exception as e:
+            logger.warning(f"🚧 All retries failed for id {id}: {str(e)}")
+            return id, f"Error: {str(e)}", False
+
+    async def _run_async_generation(self, data: pd.DataFrame) -> List[Tuple[str, str]]:
+        """running asynchronously the generation from the dataframe
+
+        Returns:
+            List: list of generation responses in tuple (id, result)
+        """
+
+        tasks = [
+            self._get_async_generation_response(id=row.id, prompt=row.prompt)
+            for row in data.itertuples()
+        ]
+        results = []
+
+        with tqdm(total=len(tasks), desc="Generating", unit="Item") as pbar:
+            for completed_task in asyncio.as_completed(tasks):
+                try:
+                    id, response, is_succeeded = await completed_task
+                    if is_succeeded:
+                        results.append((id, response))
+                except Exception as e:
+                    logger.error(f"🛑 Error while generating: {str(e)}")
+                finally:
+                    pbar.update(1)
+
+        return results
+
+    @staticmethod
+    def _assert_data(data: pd.DataFrame) -> pd.DataFrame:
+        """assert the required attributes of the data"""
+
+        assert isinstance(data, pd.DataFrame), "data should be a pandas dataframe"
+        assert "prompt" in data.columns, "data should have a column named 'prompt'"
+
+        if "id" not in data.columns:
+            data = data.reset_index().rename(columns={"index": "id"})
+            logger.warning(
+                "🚧 Data doesn't have 'id' column, so added the index as 'id' column"
+            )
+
+        return data
+
+    async def generate_async_from_dataframe(
+        self, 
+        data: pd.DataFrame, 
+        batch_size: int = 120
+    ) -> pd.DataFrame:
+        """generate asynchronously from dataframe
+
+        Args:
+            data (pd.DataFrame): dataframe with prompts
+            batch_size (int, optional): batch size for the generation. Defaults to 120.
+
+        Returns:
+            pd.DataFrame: dataframe contains id, and result of the generation
+        """
+
+        data = self._assert_data(data)
+        logger.info("🔨 Starting for generation")
+
+        responses = []
+        for i in range(0, len(data), batch_size):
+            batch_data = data.iloc[i : i + batch_size]
+            logger.info(f"🔄 Processing data batch {i} - {i+ len(batch_data)} ...")
+            response = await self._run_async_generation(batch_data)
+            responses.append(response)
+
+        responses = list(chain(*responses))
+
+        success_rate = len(responses) / len(data)
+        logger.info(
+            f"✅ Generation Finished, Success rate: {success_rate:.2%} ({len(responses)}/{len(data)})"
+        )
+
+        return pd.DataFrame(responses, columns=["id", "result"])
+
+    def generate_from_dataframe(
+        self, 
+        data: pd.DataFrame, 
+        batch_size: int = 120
+    ) -> pd.DataFrame:
+        """generate from dataframe
+
+        Args:
+            data (pd.DataFrame): dataframe with prompts
+            batch_size (int, optional): batch size for the generation. Defaults to 120.
+
+        Returns:
+            pd.DataFrame: dataframe contains generation result only
+        """
+
+        if asyncio.get_event_loop().is_running():
+            logger.error("🛑 Use `await generate_async_from_dataframe()` instead")
+            raise RuntimeError("Async event loop is already running")
+
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        return loop.run_until_complete(
+            self.generate_async_from_dataframe(data, batch_size)
+        )
