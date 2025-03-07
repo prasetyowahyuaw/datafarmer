@@ -4,14 +4,17 @@ from vertexai.generative_models import (
     GenerationConfig,
     SafetySetting,
     Tool,
+    Part,
 )
 import pandas as pd
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Any
 from itertools import chain
 from datafarmer.utils import logger
 from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt
 import asyncio
 from tqdm.asyncio import tqdm
+import base64
+import os
 
 import warnings
 
@@ -56,28 +59,64 @@ class Gemini:
             tools=tools,
         )
 
+    @staticmethod
+    def _get_binary_file_part(file_path: str, file_type: str = "audio") -> Part:
+        """return the Part Class from the given file
+
+        Args:
+            file_path (str): the file path
+            file_type (str): file type. Defaults to "audio". It can be either "audio" or "image"
+        """
+
+        assert file_type in ["audio", "image"], "type should be either 'audio' or 'image'"
+
+        mime = dict(
+            audio="audio/mp3",
+            image="image/jpeg",
+        )
+
+        with open(file_path, "rb") as f:
+            binary = f.read()
+
+        file_part = Part.from_data(
+            mime_type=mime.get(file_type),
+            data=binary,
+        )
+        logger.info(f"📦 Loaded {file_type} file from {file_path}")
+        return file_part
+
     @retry(
         wait=wait_fixed(60),
         stop=stop_after_attempt(2),
         retry=retry_if_exception_type(Exception),
     )
     async def _get_async_generation_response_with_retry(
-        self, 
-        id: str, 
-        prompt: str
+        self, id: str, prompt: str, *args: Any, **kwargs: Any
     ) -> Tuple[str, str, bool]:
         """return generation text from the given prompt with retry
 
         Args:
             id (str): the id of the prompt
             prompt (str): prompt that needs to be generated
+            *args (Any): additional arguments
+            **kwargs (Any): additional keyword arguments, currently the useful ones are `audio_file_path` and `image_file_path`
 
         Returns:
             Tuple[str, str]: it returns the id, generation response and the boolean value if the generation is successful
         """
 
+        contents = [prompt]
+
+        for key, value in kwargs.items():
+            if key == "audio_file_path":
+                audio_part = self._get_binary_file_part(file_path=value, file_type="audio")
+                contents.append(audio_part)
+            elif key == "image_file_path":
+                image_part = self._get_binary_file_part(file_path=value, file_type="image")
+                contents.append(image_part)
+
         response = await self.generative_model.generate_content_async(
-            [prompt],
+            contents,
             generation_config=self.generation_config,
             safety_settings=self.safety_settings,
             stream=False,
@@ -86,9 +125,7 @@ class Gemini:
         return id, response.text, True
 
     async def _get_async_generation_response(
-        self, 
-        id: str, 
-        prompt: str
+        self, id: str, prompt: str, *args: Any, **kwargs: Any
     ) -> Tuple[str, str, bool]:
         """return generation text from the given prompt
 
@@ -101,7 +138,9 @@ class Gemini:
         assert prompt is not None and len(prompt) > 0, "Prompt cannot be empty."
 
         try:
-            return await self._get_async_generation_response_with_retry(id, prompt)
+            return await self._get_async_generation_response_with_retry(
+                id, prompt, *args, **kwargs
+            )
         except Exception as e:
             logger.warning(f"🚧 All retries failed for id {id}: {str(e)}")
             return id, f"Error: {str(e)}", False
@@ -113,8 +152,18 @@ class Gemini:
             List: list of generation responses in tuple (id, result)
         """
 
+        additional_allowed_columns = ["audio_file_path"]
+
         tasks = [
-            self._get_async_generation_response(id=row.id, prompt=row.prompt)
+            self._get_async_generation_response(
+                id=row.id,
+                prompt=row.prompt,
+                **{
+                    col: getattr(row, col)
+                    for col in additional_allowed_columns
+                    if col in data.columns
+                },
+            )
             for row in data.itertuples()
         ]
         results = []
@@ -148,9 +197,7 @@ class Gemini:
         return data
 
     async def generate_async_from_dataframe(
-        self, 
-        data: pd.DataFrame, 
-        batch_size: int = 120
+        self, data: pd.DataFrame, batch_size: int = 120
     ) -> pd.DataFrame:
         """generate asynchronously from dataframe
 
@@ -182,9 +229,7 @@ class Gemini:
         return pd.DataFrame(responses, columns=["id", "result"])
 
     def generate_from_dataframe(
-        self, 
-        data: pd.DataFrame, 
-        batch_size: int = 120
+        self, data: pd.DataFrame, batch_size: int = 120
     ) -> pd.DataFrame:
         """generate from dataframe
 
