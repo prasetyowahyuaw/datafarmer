@@ -1,0 +1,42 @@
+# Project information
+site_name: Datafarmer
+site_description: data workers tool
+site_author: prasetyo
+
+# Repository information
+repo_name: prasetyowahyuaw/datafarmer
+repo_url: https://github.com/prasetyowahyuaw/datafarmer
+
+# Configuration
+theme:
+  name: material
+  logo: assets/logo.png
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+  favicon: assets/logo.png
+  font:
+      text: Roboto
+      code: Roboto Mono
+
+# Extensions
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+
+# Pages tree
+nav:
+  - Getting started: index.md
+  - Usage: usage.md
+
