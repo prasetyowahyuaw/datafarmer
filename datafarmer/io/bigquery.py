@@ -5,7 +5,7 @@ import pandas as pd
 import polars as pl
 import os
 from datafarmer.utils import logger
-from typing import Union
+from typing import Union, Dict, List
 
 
 def is_oauth_set() -> bool:
@@ -27,6 +27,37 @@ def get_oauth_path() -> str:
         return os.path.expanduser(
             "~/.config/gcloud/application_default_credentials.json"
         )
+    
+def get_bigquery_schema(
+    dataset_id: str, 
+    project_id: str
+) -> List[Dict]:
+    """
+    Retrieve a BigQuery schema from a given dataset id and project id
+
+    Args:
+        dataset_id (str): dataset id / name
+        project_id (str): project id
+
+    Returns:
+        Dict: return a list of dictionary containing table name and its schema
+    """
+
+    assert (
+        is_oauth_set()
+    ), "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+
+    client = bigquery.Client(project=project_id)
+    schemas = list()
+    tables = client.list_tables(dataset_id)
+
+    for table in tables:
+        table_id = f"{table.project}.{table.dataset_id}.{table.table_id}"
+        table = client.get_table(table_id)
+        schema = [field.to_api_repr() for field in table.schema]
+        schemas.append(dict(table_name=table_id, schema=schema))
+    
+    return schemas
 
 
 def read_bigquery(
