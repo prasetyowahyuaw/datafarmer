@@ -1,5 +1,5 @@
 import pytest
-from datafarmer.io import read_bigquery, is_oauth_set, write_bigquery
+from datafarmer.io import read_bigquery, is_oauth_set, write_bigquery, get_bigquery_schema
 import pandas as pd
 import polars as pl
 from datetime import datetime
@@ -36,3 +36,13 @@ def test_write_bigquery():
     write_bigquery(df=data, project_id=PROJECT_ID, table_id="test_table", dataset_id=DATASET_ID, mode="WRITE_TRUNCATE")
 
     assert True
+
+def test_get_bigquery_schema():
+    bigquery_schemas = get_bigquery_schema(
+        dataset_id=DATASET_ID,
+        project_id=PROJECT_ID,
+    )
+
+    print(f"Bigquery schemas: {bigquery_schemas}")
+    assert isinstance(bigquery_schemas, list)
+    assert len(bigquery_schemas) > 0
