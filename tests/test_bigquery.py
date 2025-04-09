@@ -1,5 +1,5 @@
 import pytest
-from datafarmer.io import read_bigquery, is_oauth_set, write_bigquery, get_bigquery_schema
+from datafarmer.io import read_bigquery, is_oauth_set, write_bigquery, get_bigquery_schema, preview_bigquery
 import pandas as pd
 import polars as pl
 from datetime import datetime
@@ -46,3 +46,10 @@ def test_get_bigquery_schema():
     print(f"Bigquery schemas: {bigquery_schemas}")
     assert isinstance(bigquery_schemas, list)
     assert len(bigquery_schemas) > 0
+
+def test_preview_bigquery():
+    query = """
+    SELECT edition FROM `bigquery-public-data.america_health_rankings.ahr`
+    """
+    preview = preview_bigquery(query, project_id=PROJECT_ID)
+    print(f"Preview bigquery cost: {preview}")
