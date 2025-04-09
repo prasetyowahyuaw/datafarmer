@@ -49,7 +49,8 @@ def test_get_bigquery_schema():
 
 def test_preview_bigquery():
     query = """
-    SELECT edition FROM `bigquery-public-data.america_health_rankings.ahr`
+    SELECT * FROM `bigquery-public-data.america_health_rankings.ahr`
     """
     preview = preview_bigquery(query, project_id=PROJECT_ID)
     print(f"Preview bigquery cost: {preview}")
+    assert isinstance(preview, str)
