@@ -93,7 +93,7 @@ def read_bigquery(
 
 
 def preview_bigquery(
-    query_str: str, 
+    query: str, 
     project_id: str, 
 ) -> str:
     
@@ -104,7 +104,7 @@ def preview_bigquery(
     client = bigquery.Client(project=project_id)
 
     job_config = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False)
-    query_job = client.query(query_str, job_config=job_config)
+    query_job = client.query(query, job_config=job_config)
 
     bytes_processed = query_job.total_bytes_processed
     mb = bytes_processed / (1024 ** 2)
