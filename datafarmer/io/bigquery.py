@@ -93,7 +93,7 @@ def read_bigquery(
 
 
 def preview_bigquery(
-    query: str, 
+    query_str: str, 
     project_id: str, 
 ) -> str:
     
@@ -104,15 +104,16 @@ def preview_bigquery(
     client = bigquery.Client(project=project_id)
 
     job_config = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False)
-    query_job = client.query(query, job_config=job_config)
+    query_job = client.query(query_str, job_config=job_config)
 
-    mb = query_job.total_bytes_processed / (1024 ** 2)
-    gb = query_job.total_bytes_processed / (1024 ** 3)
+    bytes_processed = query_job.total_bytes_processed
+    mb = bytes_processed / (1024 ** 2)
+    gb = bytes_processed / (1024 ** 3)
 
     if gb >= 1:
-        f"{gb:.1f} GB"
+        return f"{gb:.1f} GB"
     else:
-        f"{mb:.0f} MB"
+        return f"{mb:.0f} MB"
 
 def write_bigquery(
     df: pd.DataFrame,
