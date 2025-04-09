@@ -92,6 +92,28 @@ def read_bigquery(
         return pl.from_pandas(client.query(query).to_dataframe())
 
 
+def preview_bigquery(
+    query: str, 
+    project_id: str, 
+) -> str:
+    
+    assert (
+        is_oauth_set()
+    ), "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+
+    client = bigquery.Client(project=project_id)
+
+    job_config = bigquery.QueryJobConfig(dry_run=True, use_query_cache=False)
+    query_job = client.query(query, job_config=job_config)
+
+    mb = query_job.total_bytes_processed / (1024 ** 2)
+    gb = query_job.total_bytes_processed / (1024 ** 3)
+
+    if gb >= 1:
+        f"{gb:.1f} GB"
+    else:
+        f"{mb:.0f} MB"
+
 def write_bigquery(
     df: pd.DataFrame,
     project_id: str,
