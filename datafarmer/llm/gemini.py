@@ -7,7 +7,7 @@ from vertexai.generative_models import (
     Part,
 )
 import pandas as pd
-from typing import List, Tuple, Optional, Any
+from typing import Optional, Any
 from itertools import chain
 from datafarmer.utils import logger
 from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt
@@ -92,7 +92,7 @@ class Gemini:
     )
     async def _get_async_generation_response_with_retry(
         self, id: str, prompt: str, *args: Any, **kwargs: Any
-    ) -> Tuple[str, str, bool]:
+    ) -> tuple[str, str, bool]:
         """return generation text from the given prompt with retry
 
         Args:
@@ -102,7 +102,7 @@ class Gemini:
             **kwargs (Any): additional keyword arguments, currently the useful ones are `audio_file_path` and `image_file_path`
 
         Returns:
-            Tuple[str, str]: it returns the id, generation response and the boolean value if the generation is successful
+            tuple[str, str]: it returns the id, generation response and the boolean value if the generation is successful
         """
 
         contents = [prompt]
@@ -126,14 +126,14 @@ class Gemini:
 
     async def _get_async_generation_response(
         self, id: str, prompt: str, *args: Any, **kwargs: Any
-    ) -> Tuple[str, str, bool]:
+    ) -> tuple[str, str, bool]:
         """return generation text from the given prompt
 
         Args:
             id (str): id of the prompt
             prompt (str): prompt text
         Returns:
-            Tuple[str, str, bool]: it returns the id, generation response and the boolean value if the generation is successful
+            tuple[str, str, bool]: it returns the id, generation response and the boolean value if the generation is successful
         """
         assert prompt is not None and len(prompt) > 0, "Prompt cannot be empty."
 
@@ -145,7 +145,7 @@ class Gemini:
             logger.warning(f"🚧 All retries failed for id {id}: {str(e)}")
             return id, f"Error: {str(e)}", False
 
-    async def _run_async_generation(self, data: pd.DataFrame) -> List[Tuple[str, str]]:
+    async def _run_async_generation(self, data: pd.DataFrame) -> list[tuple[str, str]]:
         """running asynchronously the generation from the dataframe
 
         Returns:

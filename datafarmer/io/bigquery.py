@@ -5,7 +5,7 @@ import pandas as pd
 import polars as pl
 import os
 from datafarmer.utils import logger
-from typing import Union, Dict, List
+from typing import Union
 
 
 def is_oauth_set() -> bool:
@@ -31,7 +31,7 @@ def get_oauth_path() -> str:
 def get_bigquery_schema(
     dataset_id: str, 
     project_id: str
-) -> List[Dict]:
+) -> list[dict]:
     """
     Retrieve a BigQuery schema from a given dataset id and project id
 
