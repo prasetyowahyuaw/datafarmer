@@ -1,6 +1,4 @@
 import yaml
-import pandas as pd
-
 
 def read_text(file_path: str) -> str:
     """Reads the content of a text file. then returns it as a string."""

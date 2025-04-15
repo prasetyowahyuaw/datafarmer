@@ -1,7 +1,7 @@
 from vertexai.preview import rag
 from vertexai.preview.rag import RagCorpus
 from vertexai.generative_models import Tool
-from typing import List, Optional, Any
+from typing import Optional, Any
 from datafarmer.utils import logger
 import vertexai
 
@@ -51,7 +51,7 @@ class VertexRag:
     def import_files_to_rag(
         self,
         corpus_name: str,
-        paths: List[str],
+        paths: list[str],
         chunk_size: int = 512,
         chunk_overlap: int = 100,
         max_embedding_requests_per_min: int = 900,
@@ -60,7 +60,7 @@ class VertexRag:
         import files to the rag corpus
 
         Args:
-            paths (List[str]): list of file paths can be local files or google(gcs or gdrive). https://drive.google.com/drive/folders/{folder_id} or https://drive.google.com/file/d/{file_id}.
+            paths (list[str]): list of file paths can be local files or google(gcs or gdrive). https://drive.google.com/drive/folders/{folder_id} or https://drive.google.com/file/d/{file_id}.
             chunk_size (int, optional): size of text chunks. Defaults to 512.
             chunk_overlap (int, optional): overlap between chunks. Defaults to 100.
             max_embedding_requests_per_min (int, optional): rate limit for embedding requests. Defaults to 900.
@@ -82,7 +82,7 @@ class VertexRag:
         query: str,
         similarity_top_k: int = 10,
         vector_distance_threshold: float = 0.5,
-        file_ids: Optional[List[str]] = None,
+        file_ids: Optional[list[str]] = None,
     ) -> Any:
         """
         perform direct context retrieval
@@ -91,7 +91,7 @@ class VertexRag:
             query (str): query text
             similarity_top_k (int, optional): number of top similar chunks to retrieve. Defaults to 10.
             vector_distance_threshold (float, optional): similarity treshold. Defaults to 0.5.
-            file_ids (Optional[List[str]], optional): optional list of specific file ids to query. Defaults to None.
+            file_ids (Optional[list[str]], optional): optional list of specific file ids to query. Defaults to None.
 
         Returns:
             Any: retrieved context response
