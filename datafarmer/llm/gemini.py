@@ -37,7 +37,7 @@ class Gemini:
 
         Args:
             project_id (str): google project id
-            google_sdk_version (str, optional): google sdk version, there is vertex and genai. Defaults to "genai".
+            google_sdk_version (str, optional): google sdk version, there is vertex and genai. Defaults to "vertex".
             gemini_version (str, optional): gemini version. Defaults to "gemini-1.5-flash".
             generation_config (Optional[GenerationConfig], optional): generation config. Defaults to None.
             safety_settings (Optional[SafetySetting], optional): gemini generation safety settings. Defaults to None.
