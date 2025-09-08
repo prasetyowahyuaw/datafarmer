@@ -27,11 +27,9 @@ def get_oauth_path() -> str:
         return os.path.expanduser(
             "~/.config/gcloud/application_default_credentials.json"
         )
-    
-def get_bigquery_schema(
-    dataset_id: str, 
-    project_id: str
-) -> list[dict]:
+
+
+def get_bigquery_schema(dataset_id: str, project_id: str) -> list[dict]:
     """
     Retrieve a BigQuery schema from a given dataset id and project id
 
@@ -43,9 +41,9 @@ def get_bigquery_schema(
         Dict: return a list of dictionary containing table name and its schema
     """
 
-    assert (
-        is_oauth_set()
-    ), "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    assert is_oauth_set(), (
+        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    )
 
     client = bigquery.Client(project=project_id)
     schemas = list()
@@ -56,14 +54,12 @@ def get_bigquery_schema(
         table = client.get_table(table_id)
         schema = [field.to_api_repr() for field in table.schema]
         schemas.append(dict(table_name=table_id, schema=schema))
-    
+
     return schemas
 
 
 def read_bigquery(
-    query: str, 
-    project_id: str, 
-    return_type: str = "pandas"
+    query: str, project_id: str, return_type: str = "pandas"
 ) -> Union[pd.DataFrame, pl.DataFrame, pl.LazyFrame]:
     """Reads the content of a BigQuery by given query.
     then returns it as a DataFrame.
@@ -77,9 +73,9 @@ def read_bigquery(
         DataFrame: dataframe of the query result
     """
 
-    assert (
-        is_oauth_set()
-    ), "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    assert is_oauth_set(), (
+        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    )
 
     # check if the return type is valid
     assert return_type in ["pandas", "polars"], "return type is not valid."
@@ -93,13 +89,12 @@ def read_bigquery(
 
 
 def preview_bigquery(
-    query: str, 
-    project_id: str, 
+    query: str,
+    project_id: str,
 ) -> str:
-    
-    assert (
-        is_oauth_set()
-    ), "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    assert is_oauth_set(), (
+        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    )
 
     client = bigquery.Client(project=project_id)
 
@@ -107,13 +102,14 @@ def preview_bigquery(
     query_job = client.query(query, job_config=job_config)
 
     bytes_processed = query_job.total_bytes_processed
-    mb = bytes_processed / (1024 ** 2)
-    gb = bytes_processed / (1024 ** 3)
+    mb = bytes_processed / (1024**2)
+    gb = bytes_processed / (1024**3)
 
     if gb >= 1:
         return f"{gb:.1f} GB"
     else:
         return f"{mb:.0f} MB"
+
 
 def write_bigquery(
     df: pd.DataFrame,
@@ -136,9 +132,9 @@ def write_bigquery(
         partition_field (str, optional): table partition. Defaults to None.
     """
 
-    assert (
-        is_oauth_set()
-    ), "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    assert is_oauth_set(), (
+        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    )
     assert isinstance(df, pd.DataFrame), "data should be a pandas dataframe"
 
     client = bigquery.Client(project=project_id)
@@ -158,4 +154,4 @@ def write_bigquery(
         df, f"{project_id}.{dataset_id}.{table_id}", job_config=job_config
     )
 
-    job.result() 
+    job.result()

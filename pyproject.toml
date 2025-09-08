@@ -1,6 +1,6 @@
 [project]
 name = "datafarmer"
-version = "2.0.7"
+version = "2.0.8"
 description = "independence of data capabilities for all"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -8,6 +8,7 @@ dependencies = [
     "db-dtypes>=1.4.2",
     "google-api-python-client>=2.163.0",
     "google-cloud-aiplatform>=1.83.0",
+    "google-genai>=1.31.0",
     "gspread>=6.2.1",
     "pandas>=2.2.3",
     "pandas-gbq>=0.28.0",
@@ -15,4 +16,13 @@ dependencies = [
     "pyyaml>=6.0.2",
     "tenacity>=9.0.0",
     "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "dotenv>=0.9.9",
+    "pydotenv>=0.0.7",
+    "pytest>=8.4.1",
+    "ruff>=0.12.10",
 ]
