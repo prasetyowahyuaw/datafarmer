@@ -11,4 +11,10 @@ pip install git+https://github.com/prasetyowahyuaw/datafarmer.git
 
 Currently, this python package isn't published as a proper python package yet, hehe 😅. will be coming soon to build this package to the PyPI  ... 
 
+!!! tip
+    faster method to install datafarmer through `uv`
+    ```sh
+    uv pip install git+https://github.com/prasetyowahyuaw/datafarmer.git
+    ```
+
 
