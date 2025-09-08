@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def setup_logger():
     """
     setup the logger with a stream handler and formatter
@@ -13,5 +14,6 @@ def setup_logger():
         log_format = "%(asctime)s | %(levelname)s: %(message)s"
         console_handler.setFormatter(logging.Formatter(log_format))
         logger.addHandler(console_handler)
+
 
 setup_logger()

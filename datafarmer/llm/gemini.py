@@ -6,15 +6,16 @@ from vertexai.generative_models import (
     Tool,
     Part,
 )
+from google import genai
+from google.genai.types import GenerateContentConfig
+
 import pandas as pd
-from typing import Optional, Any
+from typing import Optional
 from itertools import chain
 from datafarmer.utils import logger
 from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt
 import asyncio
 from tqdm.asyncio import tqdm
-import base64
-import os
 
 import warnings
 
@@ -25,8 +26,9 @@ class Gemini:
     def __init__(
         self,
         project_id: str,
+        google_sdk_version: str = "vertex",
         gemini_version: str = "gemini-1.5-flash",
-        generation_config: Optional[GenerationConfig] = None,
+        generation_config: GenerationConfig | GenerateContentConfig = None,
         safety_settings: Optional[SafetySetting] = None,
         system_instruction: Optional[str] = None,
         tools: Optional[Tool] = None,
@@ -35,6 +37,7 @@ class Gemini:
 
         Args:
             project_id (str): google project id
+            google_sdk_version (str, optional): google sdk version, there is vertex and genai. Defaults to "vertex".
             gemini_version (str, optional): gemini version. Defaults to "gemini-1.5-flash".
             generation_config (Optional[GenerationConfig], optional): generation config. Defaults to None.
             safety_settings (Optional[SafetySetting], optional): gemini generation safety settings. Defaults to None.
@@ -42,22 +45,35 @@ class Gemini:
             tool (Optional[Tool], optional): tool for the generation. Defaults to None.
         """
 
-        vertexai.init(project=project_id)
+        assert google_sdk_version in [
+            "genai",
+            "vertex",
+        ], "google_sdk_version should be either 'genai' or 'vertex'"
 
-        self.project_id = project_id
         self.gemini_version = gemini_version
+        self.google_sdk_version = google_sdk_version
+        self.project_id = project_id
         self.generation_config = generation_config
         self.safety_settings = safety_settings
         self.system_instruction = system_instruction
         self.tools = tools
 
-        self.generative_model = GenerativeModel(
-            model_name=gemini_version,
-            generation_config=generation_config,
-            safety_settings=safety_settings,
-            system_instruction=system_instruction,
-            tools=tools,
-        )
+        match self.google_sdk_version:
+            case "vertex":
+                vertexai.init(project=project_id)
+
+                self.generative_model = GenerativeModel(
+                    model_name=self.gemini_version,
+                    generation_config=self.generation_config,
+                    safety_settings=self.safety_settings,
+                    system_instruction=self.system_instruction,
+                    tools=self.tools,
+                )
+
+            case "genai":
+                self.client = genai.Client(
+                    vertexai=True, project=self.project_id, location="us-central1"
+                )
 
     @staticmethod
     def _get_binary_file_part(file_path: str, file_type: str = "audio") -> Part:
@@ -68,7 +84,9 @@ class Gemini:
             file_type (str): file type. Defaults to "audio". It can be either "audio" or "image"
         """
 
-        assert file_type in ["audio", "image"], "type should be either 'audio' or 'image'"
+        assert file_type in ["audio", "image"], (
+            "type should be either 'audio' or 'image'"
+        )
 
         mime = dict(
             audio="audio/mp3",
@@ -91,7 +109,7 @@ class Gemini:
         retry=retry_if_exception_type(Exception),
     )
     async def _get_async_generation_response_with_retry(
-        self, id: str, prompt: str, *args: Any, **kwargs: Any
+        self, id: str, prompt: str, *args, **kwargs
     ) -> tuple[str, str, bool]:
         """return generation text from the given prompt with retry
 
@@ -109,23 +127,38 @@ class Gemini:
 
         for key, value in kwargs.items():
             if key == "audio_file_path":
-                audio_part = self._get_binary_file_part(file_path=value, file_type="audio")
+                audio_part = self._get_binary_file_part(
+                    file_path=value, file_type="audio"
+                )
                 contents.append(audio_part)
             elif key == "image_file_path":
-                image_part = self._get_binary_file_part(file_path=value, file_type="image")
+                image_part = self._get_binary_file_part(
+                    file_path=value, file_type="image"
+                )
                 contents.append(image_part)
 
-        response = await self.generative_model.generate_content_async(
-            contents,
-            generation_config=self.generation_config,
-            safety_settings=self.safety_settings,
-            stream=False,
-        )
+        match self.google_sdk_version:
+            case "vertex":
+                response = await self.generative_model.generate_content_async(
+                    contents,
+                    generation_config=self.generation_config,
+                    safety_settings=self.safety_settings,
+                    stream=False,
+                )
+
+            case "genai":
+                response = await self.client.aio.models.generate_content(
+                    model=kwargs.get("model", "gemini-2.0-flash"),
+                    contents=prompt,
+                    config=self.generation_config
+                    if kwargs.get("generation_config") is None
+                    else kwargs.get("generation_config"),
+                )
 
         return id, response.text, True
 
     async def _get_async_generation_response(
-        self, id: str, prompt: str, *args: Any, **kwargs: Any
+        self, id: str, prompt: str, *args, **kwargs
     ) -> tuple[str, str, bool]:
         """return generation text from the given prompt
 
@@ -145,7 +178,9 @@ class Gemini:
             logger.warning(f"🚧 All retries failed for id {id}: {str(e)}")
             return id, f"Error: {str(e)}", False
 
-    async def _run_async_generation(self, data: pd.DataFrame) -> list[tuple[str, str]]:
+    async def _run_async_generation(
+        self, data: pd.DataFrame, *args, **kwargs
+    ) -> list[tuple[str, str]]:
         """running asynchronously the generation from the dataframe
 
         Returns:
@@ -158,11 +193,13 @@ class Gemini:
             self._get_async_generation_response(
                 id=row.id,
                 prompt=row.prompt,
+                *args,
                 **{
                     col: getattr(row, col)
                     for col in additional_allowed_columns
                     if col in data.columns
                 },
+                **kwargs,
             )
             for row in data.itertuples()
         ]
@@ -197,7 +234,7 @@ class Gemini:
         return data
 
     async def generate_async_from_dataframe(
-        self, data: pd.DataFrame, batch_size: int = 120
+        self, data: pd.DataFrame, batch_size: int = 120, *args, **kwargs
     ) -> pd.DataFrame:
         """generate asynchronously from dataframe
 
@@ -215,8 +252,8 @@ class Gemini:
         responses = []
         for i in range(0, len(data), batch_size):
             batch_data = data.iloc[i : i + batch_size]
-            logger.info(f"🔄 Processing data batch {i} - {i+ len(batch_data)} ...")
-            response = await self._run_async_generation(batch_data)
+            logger.info(f"🔄 Processing data batch {i} - {i + len(batch_data)} ...")
+            response = await self._run_async_generation(batch_data, *args, **kwargs)
             responses.append(response)
 
         responses = list(chain(*responses))
@@ -229,7 +266,7 @@ class Gemini:
         return pd.DataFrame(responses, columns=["id", "result"])
 
     def generate_from_dataframe(
-        self, data: pd.DataFrame, batch_size: int = 120
+        self, data: pd.DataFrame, batch_size: int = 120, *args, **kwargs
     ) -> pd.DataFrame:
         """generate from dataframe
 
@@ -252,5 +289,5 @@ class Gemini:
             asyncio.set_event_loop(loop)
 
         return loop.run_until_complete(
-            self.generate_async_from_dataframe(data, batch_size)
+            self.generate_async_from_dataframe(data, batch_size, *args, **kwargs)
         )

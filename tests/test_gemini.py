@@ -4,12 +4,19 @@ from dotenv import load_dotenv
 from vertexai.generative_models import (
     GenerationConfig,
 )
+from google.genai.types import GenerateContentConfig
 import os
+from pydantic import BaseModel
 
 load_dotenv()
 
 PROJECT_ID = os.getenv("PROJECT_ID")
 AUDIO_FOLDER = os.getenv("AUDIO_FOLDER")
+
+class SampleResponse(BaseModel):
+    name: str
+    age: int
+    address: str
 
 def test_gemini_class():
     gemini = Gemini(project_id=PROJECT_ID, gemini_version="gemini-2.0-flash")
@@ -31,6 +38,60 @@ def test_gemini_class():
     )
 
     result = gemini.generate_from_dataframe(data)
+    print(result)
+
+    assert isinstance(result, DataFrame)
+
+def test_gemini_class_genai():
+    gemini = Gemini(project_id=PROJECT_ID, google_sdk_version="genai", gemini_version="gemini-2.0-flash")
+    data = DataFrame(
+        {
+            "prompt": [
+                "how to make a cake",
+                "what is the education system in india",
+                "explain the concept of gravity",
+                "return the list of all the prime numbers between 1 to 100",
+                "why is the sky blue",
+                "who is the founder of microsoft",
+                "explain the concept of machine learning",
+                "how to evaluate machine learning models",
+                "what is the best model for classification with skewed data",
+            ],
+            "id": ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
+        }
+    )
+
+    result = gemini.generate_from_dataframe(data)
+    print(result)
+
+    assert isinstance(result, DataFrame)
+
+def test_gemini_class_genai_with_response_schema():
+    gemini = Gemini(
+        project_id=PROJECT_ID, 
+        google_sdk_version="genai", 
+        gemini_version="gemini-2.0-flash",
+    )
+
+    data = DataFrame(
+        {
+            "prompt": [
+                "please generate the json response with name, age, and address from the following context. Context: John is a 25 year old software engineer living in New York.",
+                "please generate the json response with name, age, and address from the following context. Context: Alice is a 30 year old doctor living in Los Angeles.",
+                "please generate the json response with name, age, and address from the following context. Context: Bob is a 28 year old artist living in San Francisco.",
+            ],
+            "id": ["A", "B", "C"],
+        }
+    )
+    
+    result = gemini.generate_from_dataframe(
+        data,
+        generation_config=GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=SampleResponse
+        )
+    )
+    
     print(result)
 
     assert isinstance(result, DataFrame)
