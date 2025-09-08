@@ -10,10 +10,30 @@ repo_url: https://github.com/prasetyowahyuaw/datafarmer
 # Configuration
 theme:
   name: material
-  logo: assets/logo.png
+  logo: assets/logo_white.png
   palette:
-    primary: indigo
-    accent: indigo
+    - media: "(prefers-color-scheme)"
+      primary: light green
+      accent: light green
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    - media: "(prefers-color-scheme: light)"
+      scheme: default 
+      primary: light green  
+      accent: light green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: light green
+      accent: light green
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
   features:
     - navigation.instant
     - navigation.tracking
