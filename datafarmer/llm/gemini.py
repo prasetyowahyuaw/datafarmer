@@ -278,12 +278,15 @@ class Gemini:
             pd.DataFrame: dataframe contains generation result only
         """
 
-        if asyncio.get_event_loop().is_running():
+        try:
+            asyncio.get_running_loop()
             logger.error("🛑 Use `await generate_async_from_dataframe()` instead")
             raise RuntimeError("Async event loop is already running")
+        except RuntimeError:
+            pass
 
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
