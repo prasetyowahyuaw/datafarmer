@@ -4,7 +4,6 @@ from google.auth.exceptions import DefaultCredentialsError
 import pandas as pd
 import polars as pl
 import os
-from datafarmer.utils import logger
 from typing import Union
 
 
@@ -155,3 +154,33 @@ def write_bigquery(
     )
 
     job.result()
+
+
+def get_bigquery_info(project_id: str, dataset_id: str, table_id: str) -> dict:
+
+    assert is_oauth_set(), (
+        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+    )
+
+    client = bigquery.Client(project=project_id)
+
+    table_id = f"{project_id}.{dataset_id}.{table_id}"
+    table = client.get_table(table_id)
+
+    return {
+        'table_id': table.table_id,
+        'project': table.project,
+        'dataset_id': table.dataset_id,
+        'full_table_id': f"{table.project}.{table.dataset_id}.{table.table_id}",
+        'last_modified': table.modified.isoformat() if table.modified else None,
+        'created': table.created.isoformat() if table.created else None,
+        'num_rows': table.num_rows,
+        'num_bytes': table.num_bytes,
+        'table_type': table.table_type,
+        'location': table.location,
+        'description': table.description,
+        'expires': table.expires.isoformat() if table.expires else None,
+        'etag': table.etag,
+        'labels': dict(table.labels) if table.labels else {}
+    }
+

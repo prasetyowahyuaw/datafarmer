@@ -1,15 +1,17 @@
 import pytest
-from datafarmer.io import read_bigquery, is_oauth_set, write_bigquery, get_bigquery_schema, preview_bigquery
+from datafarmer.io import read_bigquery, is_oauth_set, write_bigquery, get_bigquery_schema, preview_bigquery, get_bigquery_info
 import pandas as pd
 import polars as pl
 from datetime import datetime
 from dotenv import load_dotenv
 import os
+import json
 
 load_dotenv()
 
 PROJECT_ID = os.getenv("PROJECT_ID")
 DATASET_ID = os.getenv("DATASET_ID")
+TABLE_ID = os.getenv("TABLE_ID")
 
 def test_read_bigquery():
     query = """
@@ -54,3 +56,10 @@ def test_preview_bigquery():
     preview = preview_bigquery(query, project_id=PROJECT_ID)
     print(f"Preview bigquery cost: {preview}")
     assert isinstance(preview, str)
+
+def test_get_bigquery_info():
+    table = get_bigquery_info(project_id=PROJECT_ID, dataset_id=DATASET_ID, table_id=TABLE_ID)
+
+    print(f"Table metadata: {table}")
+
+    assert table['num_rows'] > 0
