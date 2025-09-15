@@ -4,6 +4,7 @@ from .bigquery import (
     write_bigquery,
     get_bigquery_schema,
     preview_bigquery,
+    get_bigquery_info
 )
 from .file import read_text, read_yaml
 from .gdrive import write_gdrive_file
@@ -19,4 +20,5 @@ __all__ = [
     "get_bigquery_schema",
     "preview_bigquery",
     "read_sheet",
+    "get_bigquery_info",
 ]
