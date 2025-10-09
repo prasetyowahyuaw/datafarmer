@@ -26,7 +26,7 @@ def write_gdrive_file(
         dict: metadata of the uploaded file, contains id, name and webViewLink
     """
     creds, _ = google.auth.default(
-        scopes=["https://www.googleapis.com/auth/drive.file"],
+        scopes=["https://www.googleapis.com/auth/drive"],
         quota_project_id=project_id,
     )
 
