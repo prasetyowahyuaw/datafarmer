@@ -10,6 +10,8 @@ from google import genai
 from google.genai.types import GenerateContentConfig
 
 import pandas as pd
+import json
+import re
 from typing import Optional
 from itertools import chain
 from datafarmer.utils import logger
@@ -103,6 +105,101 @@ class Gemini:
         logger.info(f"📦 Loaded {file_type} file from {file_path}")
         return file_part
 
+    def _fix_json_response(self, response_text: str) -> str:
+        """
+        Simple function to check and fix JSON responses when response_mime_type is application/json
+        Uses LLM-based fixing as fallback when simple fixes fail
+        
+        Args:
+            response_text (str): Raw response text from the model
+            
+        Returns:
+            str: Fixed JSON string or original text if fixing fails
+        """
+        if not self.generation_config:
+            return response_text
+            
+        mime_type = getattr(self.generation_config, 'response_mime_type', None)
+        if mime_type != "application/json":
+            return response_text
+        
+        try:
+            json.loads(response_text)
+            logger.info("✅ Response is valid JSON")
+            return response_text
+        except json.JSONDecodeError as e:
+            logger.warning("🚧 Trying LLM-based JSON fixing...")
+            return self._llm_fix_json(response_text)
+
+    def _llm_fix_json(self, broken_json_text: str) -> str:
+        """
+        Use LLM to fix broken JSON format
+        
+        Args:
+            broken_json_text (str): The broken JSON text that needs fixing
+            
+        Returns:
+            str: Fixed JSON string or original text if LLM fixing fails
+        """
+        json_fixer_prompt = f"""
+        You are a JSON formatter. Your job is to take broken or malformed JSON and return only valid, properly formatted JSON.
+
+            Rules:
+            1. Return ONLY valid JSON, no explanations or extra text
+            2. Fix common JSON issues like missing quotes, trailing commas, unclosed brackets
+            3. If the input contains data that looks like it should be JSON, extract and format it properly
+            4. Preserve the original data structure and values as much as possible
+
+            Broken JSON to fix:
+            {broken_json_text}
+            """
+
+        try:
+            temp_config = None
+            if self.google_sdk_version == "vertex":
+                from vertexai.generative_models import GenerationConfig
+                temp_config = GenerationConfig(
+                    temperature=0.1,
+                    response_mime_type="application/json",
+                    max_output_tokens=2048
+                )
+            else:
+                from google.genai.types import GenerateContentConfig
+                temp_config = GenerateContentConfig(
+                    temperature=0.1,
+                    response_mime_type="application/json",
+                    max_output_tokens=2048
+                )
+
+            if self.google_sdk_version == "vertex":
+                response = self.generative_model.generate_content(
+                    json_fixer_prompt,
+                    generation_config=temp_config,
+                    safety_settings=self.safety_settings,
+                    stream=False,
+                )
+            else:
+                sync_client = self.client
+                response = sync_client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=json_fixer_prompt,
+                    config=temp_config
+                )
+
+            fixed_json = response.text.strip()
+            
+            try:
+                json.loads(fixed_json)
+                logger.info("✅ JSON format fixed using LLM")
+                return fixed_json
+            except json.JSONDecodeError as e:
+                logger.warning(f"❌ LLM-fixed JSON is still invalid: {str(e)}")
+                return broken_json_text
+
+        except Exception as e:
+            logger.error(f"🛑 Error during LLM JSON fixing: {str(e)}")
+            return broken_json_text
+
     @retry(
         wait=wait_fixed(60),
         stop=stop_after_attempt(2),
@@ -155,7 +252,9 @@ class Gemini:
                     else kwargs.get("generation_config"),
                 )
 
-        return id, response.text, True
+        processed_text = self._fix_json_response(response.text)
+
+        return id, processed_text, True
 
     async def _get_async_generation_response(
         self, id: str, prompt: str, *args, **kwargs
