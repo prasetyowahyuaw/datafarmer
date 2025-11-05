@@ -127,7 +127,7 @@ class Gemini:
             json.loads(response_text)
             logger.info("✅ Response is valid JSON")
             return response_text
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             logger.warning("🚧 Trying LLM-based JSON fixing...")
             return self._llm_fix_json(response_text)
 
