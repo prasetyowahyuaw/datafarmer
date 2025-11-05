@@ -150,7 +150,6 @@ def test_json_fixer_directly():
         
         # Try to parse the fixed JSON
         try:
-            import json
             parsed = json.loads(fixed_json)
             print(f"✅ Successfully parsed: {parsed}")
         except json.JSONDecodeError as e:
