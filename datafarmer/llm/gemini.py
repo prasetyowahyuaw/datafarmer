@@ -11,7 +11,6 @@ from google.genai.types import GenerateContentConfig
 
 import pandas as pd
 import json
-import re
 from typing import Optional
 from itertools import chain
 from datafarmer.utils import logger
