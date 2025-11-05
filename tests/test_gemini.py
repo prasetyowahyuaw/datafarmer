@@ -168,9 +168,9 @@ def test_json_fixer_directly():
 #     data = DataFrame(
 #         {
 #             "prompt": [
-#                 "please trasncribe the following audio file",
-#                 "please trasncribe the following audio file",
-#                 "please trasncribe the following audio file",
+#                 "please transcribe the following audio file",
+#                 "please transcribe the following audio file",
+#                 "please transcribe the following audio file",
                 
 #             ],
 #             "audio_file_path": [
