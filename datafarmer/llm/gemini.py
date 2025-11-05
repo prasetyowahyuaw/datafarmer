@@ -181,7 +181,7 @@ class Gemini:
             else:
                 sync_client = self.client
                 response = sync_client.models.generate_content(
-                    model="gemini-2.0-flash",
+                    model=self.gemini_version,
                     contents=json_fixer_prompt,
                     config=temp_config
                 )
