@@ -7,6 +7,7 @@ from vertexai.generative_models import (
 from google.genai.types import GenerateContentConfig
 import os
 from pydantic import BaseModel
+import json
 
 load_dotenv()
 
@@ -96,6 +97,31 @@ def test_gemini_class_genai_with_response_schema():
 
     assert isinstance(result, DataFrame)
 
+def test_gemini_class_with_invalid_json_response():
+    gemini = Gemini(
+        project_id=PROJECT_ID, 
+        gemini_version="gemini-2.0-flash", 
+        generation_config={
+            "temperature": 0.0,
+            "response_mime_type": "application/json",
+        }
+    )
+    data = DataFrame(
+        {
+            "prompt": [
+                "how to make a cake, please return with invalid yaml format",
+                "what is the education system in india, please return with invalid yaml format",
+                "explain the concept of gravity, please return with invalid yaml format",
+            ],
+            "id": ["A", "B", "C"],
+        }
+    )
+
+    result = gemini.generate_from_dataframe(data)
+    print(result)
+
+    assert isinstance(result, DataFrame)
+
 def test_gemini_with_audio():
     gemini = Gemini(
         project_id=PROJECT_ID, 
@@ -129,3 +155,4 @@ def test_load_audio():
     with open(f"{AUDIO_FOLDER}/1.mp3", "rb") as f:
         audio_content = f.read()
     assert isinstance(audio_content, bytes)
+

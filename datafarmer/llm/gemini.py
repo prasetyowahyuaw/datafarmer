@@ -16,6 +16,7 @@ from datafarmer.utils import logger
 from tenacity import retry, retry_if_exception_type, wait_fixed, stop_after_attempt
 import asyncio
 from tqdm.asyncio import tqdm
+import json
 
 import warnings
 
@@ -76,7 +77,9 @@ class Gemini:
                 )
 
     @staticmethod
-    def _get_binary_file_part(file_path: str, file_type: str = "audio") -> Part:
+    def _get_binary_file_part(
+        file_path: str, file_type: str = "audio", *args, **kwargs
+    ) -> Part:
         """return the Part Class from the given file
 
         Args:
@@ -105,7 +108,7 @@ class Gemini:
 
     @retry(
         wait=wait_fixed(60),
-        stop=stop_after_attempt(2),
+        stop=stop_after_attempt(3),
         retry=retry_if_exception_type(Exception),
     )
     async def _get_async_generation_response_with_retry(
@@ -124,6 +127,11 @@ class Gemini:
         """
 
         contents = [prompt]
+        generation_config = (
+            self.generation_config
+            if kwargs.get("generation_config") is None
+            else kwargs.get("generation_config")
+        )
 
         for key, value in kwargs.items():
             if key == "audio_file_path":
@@ -141,7 +149,7 @@ class Gemini:
             case "vertex":
                 response = await self.generative_model.generate_content_async(
                     contents,
-                    generation_config=self.generation_config,
+                    generation_config=generation_config,
                     safety_settings=self.safety_settings,
                     stream=False,
                 )
@@ -150,12 +158,26 @@ class Gemini:
                 response = await self.client.aio.models.generate_content(
                     model=kwargs.get("model", "gemini-2.0-flash"),
                     contents=prompt,
-                    config=self.generation_config
-                    if kwargs.get("generation_config") is None
-                    else kwargs.get("generation_config"),
+                    config=generation_config,
                 )
 
-        return id, response.text, True
+        response = response.text
+
+        is_json_response = (
+            isinstance(generation_config, GenerateContentConfig)
+            and generation_config.response_mime_type == "application/json"
+        ) or (
+            isinstance(generation_config, dict)
+            and generation_config.get("response_mime_type") == "application/json"
+        )
+
+        if is_json_response:
+            try:
+                json.loads(response)
+            except Exception:
+                raise ValueError(f"Failed to parse JSON response, Id: {id}")
+
+        return id, response, True
 
     async def _get_async_generation_response(
         self, id: str, prompt: str, *args, **kwargs
