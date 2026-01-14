@@ -28,7 +28,7 @@ class Gemini:
         self,
         project_id: str,
         google_sdk_version: str = "vertex",
-        gemini_version: str = "gemini-1.5-flash",
+        gemini_version: str = "gemini-2.5-flash-lite",
         generation_config: GenerationConfig | GenerateContentConfig = None,
         safety_settings: Optional[SafetySetting] = None,
         system_instruction: Optional[str] = None,
@@ -156,7 +156,7 @@ class Gemini:
 
             case "genai":
                 response = await self.client.aio.models.generate_content(
-                    model=kwargs.get("model", "gemini-2.0-flash"),
+                    model=kwargs.get("model", "gemini-2.5-flash-lite"),
                     contents=prompt,
                     config=generation_config,
                 )
