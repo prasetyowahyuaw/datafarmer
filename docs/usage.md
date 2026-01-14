@@ -1,8 +1,11 @@
 ## I/O
+
 this modules can help you to read/write a data with several sources. the current capabilities are:
 
 ### Read BigQuery
+
 return a dataframe by parsing query and the project id only.
+
 ```python
 from datafarmer.io import read_bigquery
 
@@ -13,16 +16,19 @@ data = read_bigquery(
     return_type="pandas"
 )
 ```
+
 `read_bigquery` function also can return polars dataframe, just change the `return_type` value to `polars`.
 
 ### Write BigQuery
+
 if we have a dataframe and want to store it in the BigQuery table
+
 ```python
 from datafarmer.io import write_bigquery
 import pandas as pd
 
 data = pd.DataFrame({
-    "id": [1,2,3], 
+    "id": [1,2,3],
     "value": ["Belalang Tempur", "Soto Lamongan", "Kapal Selam"]
 })
 write_bigquery(
@@ -35,7 +41,9 @@ write_bigquery(
 ```
 
 ### Read Text
+
 return string value from file reading result
+
 ```python
 from datafarmer.io import read_file
 
@@ -43,7 +51,9 @@ prompt = read_file("folder/prompt.txt")
 ```
 
 ### Read Yaml
-return dictionary value from yaml file 
+
+return dictionary value from yaml file
+
 ```python
 from datafarmer.io import read_yaml
 
@@ -51,6 +61,7 @@ setup = read_yaml("folder/setup.yml)
 ```
 
 ## LLM
+
 this module contains LLM wrapper, and still for google gemini only, for others will be coming soon. mostly the usage from this modules is to do asynchronous generation given by a dataframe.
 
 ### Generating from Dataframe
@@ -58,7 +69,7 @@ this module contains LLM wrapper, and still for google gemini only, for others w
 ```python
 from datafarmer.llm import Gemini
 
-gemini = Gemini(project_id="project_id", gemini_version="gemini-2.0-flash")
+gemini = Gemini(project_id="project_id", gemini_version="gemini-2.5-flash-lite")
 data = DataFrame({
     "prompt": [
         "how to make a cake",
@@ -84,9 +95,9 @@ class SampleResponse(BaseModel):
     address: str
 
 gemini = Gemini(
-    project_id=PROJECT_ID, 
-    google_sdk_version="genai", 
-    gemini_version="gemini-2.0-flash",
+    project_id=PROJECT_ID,
+    google_sdk_version="genai",
+    gemini_version="gemini-2.5-flash-lite",
 )
 
 data = DataFrame(
@@ -111,6 +122,9 @@ result = gemini.generate_from_dataframe(
 ```
 
 ## Utils
+
 😅 coming soon ...
+
 ## Analysis
+
 😅 coming soon ...

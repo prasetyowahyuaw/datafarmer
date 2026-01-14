@@ -20,7 +20,7 @@ class SampleResponse(BaseModel):
     address: str
 
 def test_gemini_class():
-    gemini = Gemini(project_id=PROJECT_ID, gemini_version="gemini-2.0-flash")
+    gemini = Gemini(project_id=PROJECT_ID, gemini_version="gemini-2.5-flash-lite")
     data = DataFrame(
         {
             "prompt": [
@@ -44,7 +44,7 @@ def test_gemini_class():
     assert isinstance(result, DataFrame)
 
 def test_gemini_class_genai():
-    gemini = Gemini(project_id=PROJECT_ID, google_sdk_version="genai", gemini_version="gemini-2.0-flash")
+    gemini = Gemini(project_id=PROJECT_ID, google_sdk_version="genai", gemini_version="gemini-2.5-flash-lite")
     data = DataFrame(
         {
             "prompt": [
@@ -71,7 +71,7 @@ def test_gemini_class_genai_with_response_schema():
     gemini = Gemini(
         project_id=PROJECT_ID, 
         google_sdk_version="genai", 
-        gemini_version="gemini-2.0-flash",
+        gemini_version="gemini-2.5-flash-lite",
     )
 
     data = DataFrame(
@@ -100,7 +100,7 @@ def test_gemini_class_genai_with_response_schema():
 def test_gemini_class_with_invalid_json_response():
     gemini = Gemini(
         project_id=PROJECT_ID, 
-        gemini_version="gemini-2.0-flash", 
+        gemini_version="gemini-2.5-flash-lite",
         generation_config={
             "temperature": 0.0,
             "response_mime_type": "application/json",
@@ -125,7 +125,7 @@ def test_gemini_class_with_invalid_json_response():
 def test_gemini_with_audio():
     gemini = Gemini(
         project_id=PROJECT_ID, 
-        gemini_version="gemini-2.0-flash",
+        gemini_version="gemini-2.5-flash-lite",
         generation_config=GenerationConfig(
             audio_timestamp=True
         )
