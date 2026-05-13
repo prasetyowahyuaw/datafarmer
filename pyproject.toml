@@ -23,10 +23,16 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black>=25.1.0",
-    "dotenv>=0.9.9",
+    "python-dotenv>=1.2.2",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.19",
     "pymdown-extensions>=10.16.1",
-    "pytest>=8.4.1",
+    "pytest>=9.0.3",
     "ruff>=0.12.10",
+]
+
+[tool.uv]
+constraint-dependencies = [
+    "urllib3>=2.7.0",
+    "cryptography>=46.0.7",
 ]
