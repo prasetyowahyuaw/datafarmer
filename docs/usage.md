@@ -166,12 +166,18 @@ The input DataFrame must have a `prompt` column. An `id` column is optional — 
 
 ### Gemini
 
-Wraps Google Gemini via Vertex AI SDK (default) or the newer `google-genai` SDK.
+Wraps Google Gemini via the `google-genai` SDK (default) or the legacy Vertex AI SDK.
+
+!!! warning "Vertex AI SDK is deprecated"
+    `google_sdk_version="vertex"` uses the legacy Vertex AI SDK, which is deprecated and
+    will be removed in a future release. The default is now `"genai"` (the `google-genai`
+    SDK). New code should use `"genai"`; only pass `"vertex"` for backward compatibility.
 
 ```python
 from datafarmer.llm import Gemini
 import pandas as pd
 
+# google_sdk_version defaults to "genai"
 gemini = Gemini(project_id="project_id", gemini_version="gemini-2.5-flash-lite")
 
 data = pd.DataFrame({
@@ -251,6 +257,44 @@ result = gemini.generate_from_dataframe(data)
 ```python
 result = await gemini.generate_async_from_dataframe(data, batch_size=50)
 ```
+
+#### Advanced `google-genai` client config (`client_kwargs`)
+
+When using `google_sdk_version="genai"`, you can forward any keyword argument to the
+underlying `genai.Client` via `client_kwargs`. Keys you provide override the defaults
+(`vertexai=True`, `project=project_id`, `location="us-central1"`), so this lets you set a
+custom `location`, `http_options`, `credentials`, `api_key`, and more — without the class
+needing a dedicated parameter for each.
+
+A common use case is routing through a GenAI Gateway with passthrough credentials:
+
+```python
+import os
+import json
+from datafarmer.llm import Gemini
+from google.genai.types import HttpOptions
+
+# Passthrough credentials provided as a JSON string (e.g. via GENAI_CREDENTIALS)
+genai_creds = json.loads(os.getenv("GENAI_CREDENTIALS"))
+vertex_ai_creds = genai_creds["vertex_ai_passthrough"]
+
+gemini = Gemini(
+    project_id=os.getenv("PROJECT_ID"),
+    google_sdk_version="genai",
+    gemini_version="gemini-2.5-flash-lite",
+    client_kwargs={
+        "location": "global",
+        "http_options": HttpOptions(**vertex_ai_creds),
+    },
+)
+
+result = gemini.generate_from_dataframe(data)
+```
+
+!!! note
+    `client_kwargs` only applies to the `genai` SDK (`google_sdk_version="genai"`). GCP
+    credentials belong in `client_kwargs={"credentials": ...}` — not inside `HttpOptions`,
+    which only carries transport options such as `headers`, `base_url`, and `timeout`.
 
 ---
 
