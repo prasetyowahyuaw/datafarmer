@@ -4,15 +4,17 @@ from dotenv import load_dotenv
 from vertexai.generative_models import (
     GenerationConfig,
 )
-from google.genai.types import GenerateContentConfig
+from google.genai.types import GenerateContentConfig, HttpOptions
 import os
 from pydantic import BaseModel
 import json
+import pytest
 
 load_dotenv()
 
 PROJECT_ID = os.getenv("PROJECT_ID")
 AUDIO_FOLDER = os.getenv("AUDIO_FOLDER")
+GENAI_CREDENTIALS = os.getenv("GENAI_CREDENTIALS")
 
 class SampleResponse(BaseModel):
     name: str
@@ -20,7 +22,8 @@ class SampleResponse(BaseModel):
     address: str
 
 def test_gemini_class():
-    gemini = Gemini(project_id=PROJECT_ID, gemini_version="gemini-2.5-flash-lite")
+    # explicitly exercise the legacy "vertex" SDK path (default is now "genai")
+    gemini = Gemini(project_id=PROJECT_ID, google_sdk_version="vertex", gemini_version="gemini-2.5-flash-lite")
     data = DataFrame(
         {
             "prompt": [
@@ -59,6 +62,44 @@ def test_gemini_class_genai():
                 "what is the best model for classification with skewed data",
             ],
             "id": ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
+        }
+    )
+
+    result = gemini.generate_from_dataframe(data)
+    print(result)
+
+    assert isinstance(result, DataFrame)
+
+def test_gemini_class_genai_with_http_options():
+    """Verify the genai client can be configured via client_kwargs with a custom
+    location and http_options (e.g. GenAI Gateway passthrough credentials)."""
+    if not GENAI_CREDENTIALS:
+        pytest.skip("GENAI_CREDENTIALS env var not set")
+
+    genai_creds = json.loads(GENAI_CREDENTIALS)
+    vertex_ai_creds = genai_creds["vertex_ai_passthrough"]
+
+    gemini = Gemini(
+        project_id=PROJECT_ID,
+        google_sdk_version="genai",
+        gemini_version="gemini-2.5-flash-lite",
+        client_kwargs={
+            "location": "global",
+            "http_options": HttpOptions(**vertex_ai_creds),
+        },
+    )
+
+    # the configured values should reach the underlying genai client
+    assert gemini.client._api_client.location == "global"
+
+    data = DataFrame(
+        {
+            "prompt": [
+                "how to make a cake",
+                "why is the sky blue",
+                "who is the founder of microsoft",
+            ],
+            "id": ["A", "B", "C"],
         }
     )
 
@@ -123,8 +164,10 @@ def test_gemini_class_with_invalid_json_response():
     assert isinstance(result, DataFrame)
 
 def test_gemini_with_audio():
+    # audio parts are attached only on the legacy "vertex" SDK path
     gemini = Gemini(
-        project_id=PROJECT_ID, 
+        project_id=PROJECT_ID,
+        google_sdk_version="vertex",
         gemini_version="gemini-2.5-flash-lite",
         generation_config=GenerationConfig(
             audio_timestamp=True

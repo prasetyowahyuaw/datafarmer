@@ -23,7 +23,7 @@ class Gemini(BaseLLM):
     def __init__(
         self,
         project_id: str,
-        google_sdk_version: str = "vertex",
+        google_sdk_version: str = "genai",
         gemini_version: str = "gemini-2.5-flash-lite",
         generation_config: GenerationConfig | GenerateContentConfig = None,
         safety_settings: Optional[SafetySetting] = None,
@@ -33,12 +33,14 @@ class Gemini(BaseLLM):
         max_wait: int = 60,
         max_attempts: int = 3,
         request_timeout: int = 60,
+        client_kwargs: Optional[dict] = None,
     ):
         """Initialize the Gemini class.
 
         Args:
             project_id (str): google project id
-            google_sdk_version (str, optional): google sdk version, there is vertex and genai. Defaults to "vertex".
+            google_sdk_version (str, optional): google sdk version, there is vertex and genai. Defaults to "genai".
+                Note: "vertex" (the legacy Vertex AI SDK) is deprecated — prefer "genai".
             gemini_version (str, optional): gemini version. Defaults to "gemini-2.5-flash-lite".
             generation_config (Optional[GenerationConfig], optional): generation config. Defaults to None.
             safety_settings (Optional[SafetySetting], optional): gemini generation safety settings. Defaults to None.
@@ -48,6 +50,11 @@ class Gemini(BaseLLM):
             max_wait (int, optional): maximum seconds between retries. Defaults to 60.
             max_attempts (int, optional): maximum number of retry attempts. Defaults to 3.
             request_timeout (int, optional): per-request timeout in seconds. Defaults to 60.
+            client_kwargs (Optional[dict], optional): extra keyword arguments forwarded to
+                ``genai.Client`` (e.g. ``location``, ``http_options``, ``credentials``,
+                ``api_key``). Only used when ``google_sdk_version='genai'``. Keys here override
+                the defaults (``vertexai=True``, ``project=project_id``, ``location='us-central1'``).
+                Defaults to None.
         """
         super().__init__(min_wait=min_wait, max_wait=max_wait, max_attempts=max_attempts, request_timeout=request_timeout)
 
@@ -63,6 +70,7 @@ class Gemini(BaseLLM):
         self.safety_settings = safety_settings
         self.system_instruction = system_instruction
         self.tools = tools
+        self.client_kwargs = client_kwargs or {}
 
         match self.google_sdk_version:
             case "vertex":
@@ -77,9 +85,13 @@ class Gemini(BaseLLM):
                 )
 
             case "genai":
-                self.client = genai.Client(
-                    vertexai=True, project=self.project_id, location="us-central1"
-                )
+                client_kwargs = {
+                    "vertexai": True,
+                    "project": self.project_id,
+                    "location": "us-central1",
+                }
+                client_kwargs.update(self.client_kwargs)
+                self.client = genai.Client(**client_kwargs)
 
     @staticmethod
     def _get_binary_file_part(
