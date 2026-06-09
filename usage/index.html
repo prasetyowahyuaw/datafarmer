@@ -532,6 +532,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#advanced-google-genai-client-config-client_kwargs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced google-genai client config (client_kwargs)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -908,6 +919,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#advanced-google-genai-client-config-client_kwargs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced google-genai client config (client_kwargs)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1226,22 +1248,29 @@
 </table>
 <p>The input DataFrame must have a <code>prompt</code> column. An <code>id</code> column is optional — if missing, the row index is used automatically. Any extra columns are passed as <code>**kwargs</code> to the underlying provider.</p>
 <h3 id="gemini">Gemini</h3>
-<p>Wraps Google Gemini via Vertex AI SDK (default) or the newer <code>google-genai</code> SDK.</p>
+<p>Wraps Google Gemini via the <code>google-genai</code> SDK (default) or the legacy Vertex AI SDK.</p>
+<div class="admonition warning">
+<p class="admonition-title">Vertex AI SDK is deprecated</p>
+<p><code>google_sdk_version="vertex"</code> uses the legacy Vertex AI SDK, which is deprecated and
+will be removed in a future release. The default is now <code>"genai"</code> (the <code>google-genai</code>
+SDK). New code should use <code>"genai"</code>; only pass <code>"vertex"</code> for backward compatibility.</p>
+</div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gemini</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">gemini</span> <span class="o">=</span> <span class="n">Gemini</span><span class="p">(</span><span class="n">project_id</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">,</span> <span class="n">gemini_version</span><span class="o">=</span><span class="s2">&quot;gemini-2.5-flash-lite&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">],</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>        <span class="s2">&quot;how to make a cake&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>        <span class="s2">&quot;what is the education system in india&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>        <span class="s2">&quot;explain the concept of gravity&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="p">],</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="p">})</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="n">result</span> <span class="o">=</span> <span class="n">gemini</span><span class="o">.</span><span class="n">generate_from_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># google_sdk_version defaults to &quot;genai&quot;</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">gemini</span> <span class="o">=</span> <span class="n">Gemini</span><span class="p">(</span><span class="n">project_id</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">,</span> <span class="n">gemini_version</span><span class="o">=</span><span class="s2">&quot;gemini-2.5-flash-lite&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">],</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>        <span class="s2">&quot;how to make a cake&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>        <span class="s2">&quot;what is the education system in india&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>        <span class="s2">&quot;explain the concept of gravity&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>    <span class="p">],</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="p">})</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="n">result</span> <span class="o">=</span> <span class="n">gemini</span><span class="o">.</span><span class="n">generate_from_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="with-system-instruction">With system instruction</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">gemini</span> <span class="o">=</span> <span class="n">Gemini</span><span class="p">(</span>
@@ -1296,26 +1325,60 @@
 <h4 id="async-usage">Async usage</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">gemini</span><span class="o">.</span><span class="n">generate_async_from_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 </code></pre></div>
+<h4 id="advanced-google-genai-client-config-client_kwargs">Advanced <code>google-genai</code> client config (<code>client_kwargs</code>)</h4>
+<p>When using <code>google_sdk_version="genai"</code>, you can forward any keyword argument to the
+underlying <code>genai.Client</code> via <code>client_kwargs</code>. Keys you provide override the defaults
+(<code>vertexai=True</code>, <code>project=project_id</code>, <code>location="us-central1"</code>), so this lets you set a
+custom <code>location</code>, <code>http_options</code>, <code>credentials</code>, <code>api_key</code>, and more — without the class
+needing a dedicated parameter for each.</p>
+<p>A common use case is routing through a GenAI Gateway with passthrough credentials:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gemini</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">google.genai.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">HttpOptions</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="c1"># Passthrough credentials provided as a JSON string (e.g. via GENAI_CREDENTIALS)</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="n">genai_creds</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GENAI_CREDENTIALS&quot;</span><span class="p">))</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="n">vertex_ai_creds</span> <span class="o">=</span> <span class="n">genai_creds</span><span class="p">[</span><span class="s2">&quot;vertex_ai_passthrough&quot;</span><span class="p">]</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="n">gemini</span> <span class="o">=</span> <span class="n">Gemini</span><span class="p">(</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="n">project_id</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;PROJECT_ID&quot;</span><span class="p">),</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>    <span class="n">google_sdk_version</span><span class="o">=</span><span class="s2">&quot;genai&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>    <span class="n">gemini_version</span><span class="o">=</span><span class="s2">&quot;gemini-2.5-flash-lite&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    <span class="n">client_kwargs</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>        <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="s2">&quot;global&quot;</span><span class="p">,</span>
+<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>        <span class="s2">&quot;http_options&quot;</span><span class="p">:</span> <span class="n">HttpOptions</span><span class="p">(</span><span class="o">**</span><span class="n">vertex_ai_creds</span><span class="p">),</span>
+<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>    <span class="p">},</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="p">)</span>
+<a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
+<a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a><span class="n">result</span> <span class="o">=</span> <span class="n">gemini</span><span class="o">.</span><span class="n">generate_from_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>client_kwargs</code> only applies to the <code>genai</code> SDK (<code>google_sdk_version="genai"</code>). GCP
+credentials belong in <code>client_kwargs={"credentials": ...}</code> — not inside <code>HttpOptions</code>,
+which only carries transport options such as <code>headers</code>, <code>base_url</code>, and <code>timeout</code>.</p>
+</div>
 <hr />
 <h3 id="anthropic">Anthropic</h3>
 <p>Wraps the Anthropic (Claude) API. Requires an <code>ANTHROPIC_API_KEY</code> environment variable or an explicit <code>api_key</code> parameter.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Anthropic</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">anthropic</span> <span class="o">=</span> <span class="n">Anthropic</span><span class="p">(</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-sonnet-4-6&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">system_instruction</span><span class="o">=</span><span class="s2">&quot;You are a helpful data analyst.&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="p">)</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>
-<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">],</span>
-<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
-<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>        <span class="s2">&quot;Summarise the key trends in e-commerce for 2024.&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>        <span class="s2">&quot;What are the main causes of customer churn?&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>    <span class="p">],</span>
-<a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="p">})</span>
-<a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>
-<a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="n">result</span> <span class="o">=</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">generate_from_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Anthropic</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">anthropic</span> <span class="o">=</span> <span class="n">Anthropic</span><span class="p">(</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-sonnet-4-6&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">system_instruction</span><span class="o">=</span><span class="s2">&quot;You are a helpful data analyst.&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">)</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">],</span>
+<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
+<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>        <span class="s2">&quot;Summarise the key trends in e-commerce for 2024.&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>        <span class="s2">&quot;What are the main causes of customer churn?&quot;</span><span class="p">,</span>
+<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    <span class="p">],</span>
+<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="p">})</span>
+<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>
+<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="n">result</span> <span class="o">=</span> <span class="n">anthropic</span><span class="o">.</span><span class="n">generate_from_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1356,28 +1419,28 @@
 <hr />
 <h3 id="githubcopilot">GithubCopilot</h3>
 <p>Uses the GitHub Models API (OpenAI-compatible endpoint). Authentication is via a GitHub personal token — fetched automatically from <code>gh auth token</code> if not provided.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GithubCopilot</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">copilot</span> <span class="o">=</span> <span class="n">GithubCopilot</span><span class="p">(</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">system_instruction</span><span class="o">=</span><span class="s2">&quot;You are a Python coding assistant.&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">)</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">],</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>        <span class="s2">&quot;Write a Python function to flatten a nested list.&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>        <span class="s2">&quot;Explain the difference between a list and a generator.&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>    <span class="p">],</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="p">})</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="n">result</span> <span class="o">=</span> <span class="n">copilot</span><span class="o">.</span><span class="n">generate_from_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GithubCopilot</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="n">copilot</span> <span class="o">=</span> <span class="n">GithubCopilot</span><span class="p">(</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    <span class="n">system_instruction</span><span class="o">=</span><span class="s2">&quot;You are a Python coding assistant.&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="p">)</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">],</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>    <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="p">[</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>        <span class="s2">&quot;Write a Python function to flatten a nested list.&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>        <span class="s2">&quot;Explain the difference between a list and a generator.&quot;</span><span class="p">,</span>
+<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>    <span class="p">],</span>
+<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="p">})</span>
+<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>
+<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="n">result</span> <span class="o">=</span> <span class="n">copilot</span><span class="o">.</span><span class="n">generate_from_dataframe</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>Make sure you are logged in to the GitHub CLI first:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>gh<span class="w"> </span>auth<span class="w"> </span>login
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>gh<span class="w"> </span>auth<span class="w"> </span>login
 </code></pre></div></p>
 </div>
 <table>
@@ -1414,101 +1477,101 @@
 <hr />
 <h3 id="vertexrag">VertexRag</h3>
 <p>Wraps Vertex AI RAG (Retrieval-Augmented Generation) for building corpora, importing documents, and querying them.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">VertexRag</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">rag</span> <span class="o">=</span> <span class="n">VertexRag</span><span class="p">(</span><span class="n">project_id</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">VertexRag</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">rag</span> <span class="o">=</span> <span class="n">VertexRag</span><span class="p">(</span><span class="n">project_id</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="create-a-corpus">Create a corpus</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="n">corpus</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">set_corpus</span><span class="p">(</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">display_name</span><span class="o">=</span><span class="s2">&quot;my-knowledge-base&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="n">embedding_model</span><span class="o">=</span><span class="s2">&quot;text-embedding-004&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="p">)</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">corpus_name</span> <span class="o">=</span> <span class="n">corpus</span><span class="o">.</span><span class="n">name</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">corpus</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">set_corpus</span><span class="p">(</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">display_name</span><span class="o">=</span><span class="s2">&quot;my-knowledge-base&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="n">embedding_model</span><span class="o">=</span><span class="s2">&quot;text-embedding-004&quot;</span><span class="p">,</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="p">)</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="n">corpus_name</span> <span class="o">=</span> <span class="n">corpus</span><span class="o">.</span><span class="n">name</span>
 </code></pre></div>
 <h4 id="import-files">Import files</h4>
 <p>Supports local paths, GCS (<code>gs://</code>), and Google Drive URLs.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">rag</span><span class="o">.</span><span class="n">import_files_to_rag</span><span class="p">(</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">corpus_name</span><span class="o">=</span><span class="n">corpus_name</span><span class="p">,</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="n">paths</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>        <span class="s2">&quot;https://drive.google.com/drive/folders/your_folder_id&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>        <span class="s2">&quot;gs://your-bucket/docs/&quot;</span><span class="p">,</span>
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="p">],</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
-<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>    <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">rag</span><span class="o">.</span><span class="n">import_files_to_rag</span><span class="p">(</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="n">corpus_name</span><span class="o">=</span><span class="n">corpus_name</span><span class="p">,</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="n">paths</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>        <span class="s2">&quot;https://drive.google.com/drive/folders/your_folder_id&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>        <span class="s2">&quot;gs://your-bucket/docs/&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="p">],</span>
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>    <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="p">)</span>
 </code></pre></div>
 <h4 id="query-the-corpus-directly">Query the corpus directly</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">response</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">get_retrieval_query</span><span class="p">(</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="n">corpus_name</span><span class="o">=</span><span class="n">corpus_name</span><span class="p">,</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="n">query</span><span class="o">=</span><span class="s2">&quot;What is the refund policy?&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="n">similarity_top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="n">vector_distance_threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">response</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">get_retrieval_query</span><span class="p">(</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>    <span class="n">corpus_name</span><span class="o">=</span><span class="n">corpus_name</span><span class="p">,</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">query</span><span class="o">=</span><span class="s2">&quot;What is the refund policy?&quot;</span><span class="p">,</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">similarity_top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">vector_distance_threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="p">)</span>
 </code></pre></div>
 <h4 id="use-rag-as-a-gemini-tool">Use RAG as a Gemini tool</h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gemini</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">rag_tool</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">get_rag_tool</span><span class="p">(</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">corpus_name</span><span class="o">=</span><span class="n">corpus_name</span><span class="p">,</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">similarity_top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>    <span class="n">vector_distance_threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="p">)</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>
-<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="n">gemini</span> <span class="o">=</span> <span class="n">Gemini</span><span class="p">(</span>
-<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="n">project_id</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="n">gemini_version</span><span class="o">=</span><span class="s2">&quot;gemini-2.5-flash-lite&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>    <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">rag_tool</span><span class="p">],</span>
-<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gemini</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="n">rag_tool</span> <span class="o">=</span> <span class="n">rag</span><span class="o">.</span><span class="n">get_rag_tool</span><span class="p">(</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">corpus_name</span><span class="o">=</span><span class="n">corpus_name</span><span class="p">,</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">similarity_top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">vector_distance_threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="p">)</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="n">gemini</span> <span class="o">=</span> <span class="n">Gemini</span><span class="p">(</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="n">project_id</span><span class="o">=</span><span class="s2">&quot;project_id&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>    <span class="n">gemini_version</span><span class="o">=</span><span class="s2">&quot;gemini-2.5-flash-lite&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>    <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">rag_tool</span><span class="p">],</span>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="p">)</span>
 </code></pre></div>
 <hr />
 <h2 id="analysis">Analysis</h2>
 <p>Helper functions for exploratory data analysis.</p>
 <h3 id="get-features-info">Get Features Info</h3>
 <p>Returns a summary of each column: its dtype, number of unique values, and the unique values themselves.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_features_info</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="s2">&quot;Alice&quot;</span><span class="p">],</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mi">85</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="s2">&quot;grade&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">],</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="p">})</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="n">info</span> <span class="o">=</span> <span class="n">get_features_info</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_features_info</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="s2">&quot;Alice&quot;</span><span class="p">],</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mi">85</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="s2">&quot;grade&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">],</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="p">})</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="n">info</span> <span class="o">=</span> <span class="n">get_features_info</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>  Feature   Dtypes  Unique Values        Values
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>0    name   object              2  [Alice, Bob]
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>1   score    int64              2      [90, 85]
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>2   grade   object              2        [A, B]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>  Feature   Dtypes  Unique Values        Values
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>0    name   object              2  [Alice, Bob]
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>1   score    int64              2      [90, 85]
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>2   grade   object              2        [A, B]
 </code></pre></div>
 <h3 id="get-null-proportion">Get Null Proportion</h3>
 <p>Returns only the columns that have at least one null value, along with their null count and proportion.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_null_proportion</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Charlie&quot;</span><span class="p">],</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mi">85</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    <span class="s2">&quot;grade&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">],</span>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="p">})</span>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="n">null_info</span> <span class="o">=</span> <span class="n">get_null_proportion</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">null_info</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_null_proportion</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Charlie&quot;</span><span class="p">],</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mi">85</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a>    <span class="s2">&quot;grade&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">],</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="p">})</span>
+<a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a>
+<a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="n">null_info</span> <span class="o">=</span> <span class="n">get_null_proportion</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">null_info</span><span class="p">)</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>       Null Samples  Null Proportion
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>name              1         0.333333
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>score             1         0.333333
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>       Null Samples  Null Proportion
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>name              1         0.333333
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>score             1         0.333333
 </code></pre></div>
 <hr />
 <h2 id="utils">Utils</h2>
 <h3 id="logger">Logger</h3>
 <p>A pre-configured logger instance ready to use across your scripts.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting pipeline...&quot;</span><span class="p">)</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Missing values detected.&quot;</span><span class="p">)</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to connect to BigQuery.&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datafarmer.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting pipeline...&quot;</span><span class="p">)</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Missing values detected.&quot;</span><span class="p">)</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to connect to BigQuery.&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p>Output format: <code>2025-01-01 12:00:00,000 | INFO: Starting pipeline...</code></p>
 
