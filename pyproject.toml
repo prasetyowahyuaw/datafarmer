@@ -32,6 +32,11 @@ dev = [
 
 [tool.uv]
 constraint-dependencies = [
-    "urllib3>=2.7.0",
-    "cryptography>=46.0.7",
+    "urllib3>=2.8.0",
+    "cryptography>=50.0.0",
+    "pyasn1>=0.6.5",
+    "oauthlib>=4.0.0",
+    "certifi>=2026.10.18",
+    "anyio>=4.14.2",
+    "httplib2>=0.32.0",
 ]
