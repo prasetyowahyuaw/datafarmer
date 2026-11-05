@@ -50,7 +50,8 @@ def write_gdrive_file(
         except Exception as e:
             raise ValueError(f"Cannot access folder with ID '{folder_id}': {str(e)}")
     else:
-        query = f"name='{folder_id}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
+        escaped_name = folder_id.replace("\\", "\\\\").replace("'", "\\'")
+        query = f"name='{escaped_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
         results = service.files().list(q=query, fields="files(id, name)").execute()
         folders = results.get("files", [])
 

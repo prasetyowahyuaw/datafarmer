@@ -1,9 +1,6 @@
 from datafarmer.llm import Gemini
 from pandas import DataFrame
 from dotenv import load_dotenv
-from vertexai.generative_models import (
-    GenerationConfig,
-)
 from google.genai.types import GenerateContentConfig, HttpOptions
 import os
 from pydantic import BaseModel
@@ -21,33 +18,8 @@ class SampleResponse(BaseModel):
     age: int
     address: str
 
-def test_gemini_class():
-    # explicitly exercise the legacy "vertex" SDK path (default is now "genai")
-    gemini = Gemini(project_id=PROJECT_ID, google_sdk_version="vertex", gemini_version="gemini-2.5-flash-lite")
-    data = DataFrame(
-        {
-            "prompt": [
-                "how to make a cake",
-                "what is the education system in india",
-                "explain the concept of gravity",
-                "return the list of all the prime numbers between 1 to 100",
-                "why is the sky blue",
-                "who is the founder of microsoft",
-                "explain the concept of machine learning",
-                "how to evaluate machine learning models",
-                "what is the best model for classification with skewed data",
-            ],
-            "id": ["A", "B", "C", "D", "E", "F", "G", "H", "I"],
-        }
-    )
-
-    result = gemini.generate_from_dataframe(data)
-    print(result)
-
-    assert isinstance(result, DataFrame)
-
 def test_gemini_class_genai():
-    gemini = Gemini(project_id=PROJECT_ID, google_sdk_version="genai", gemini_version="gemini-2.5-flash-lite")
+    gemini = Gemini(project_id=PROJECT_ID, gemini_version="gemini-3.1-flash-lite")
     data = DataFrame(
         {
             "prompt": [
@@ -81,8 +53,7 @@ def test_gemini_class_genai_with_http_options():
 
     gemini = Gemini(
         project_id=PROJECT_ID,
-        google_sdk_version="genai",
-        gemini_version="gemini-2.5-flash-lite",
+        gemini_version="gemini-3.1-flash-lite",
         client_kwargs={
             "location": "global",
             "http_options": HttpOptions(**vertex_ai_creds),
@@ -111,8 +82,7 @@ def test_gemini_class_genai_with_http_options():
 def test_gemini_class_genai_with_response_schema():
     gemini = Gemini(
         project_id=PROJECT_ID, 
-        google_sdk_version="genai", 
-        gemini_version="gemini-2.5-flash-lite",
+                gemini_version="gemini-3.1-flash-lite",
     )
 
     data = DataFrame(
@@ -141,7 +111,7 @@ def test_gemini_class_genai_with_response_schema():
 def test_gemini_class_with_invalid_json_response():
     gemini = Gemini(
         project_id=PROJECT_ID, 
-        gemini_version="gemini-2.5-flash-lite",
+        gemini_version="gemini-3.1-flash-lite",
         generation_config={
             "temperature": 0.0,
             "response_mime_type": "application/json",
@@ -163,15 +133,11 @@ def test_gemini_class_with_invalid_json_response():
 
     assert isinstance(result, DataFrame)
 
+@pytest.mark.skipif(not AUDIO_FOLDER, reason="AUDIO_FOLDER not set")
 def test_gemini_with_audio():
-    # audio parts are attached only on the legacy "vertex" SDK path
     gemini = Gemini(
         project_id=PROJECT_ID,
-        google_sdk_version="vertex",
-        gemini_version="gemini-2.5-flash-lite",
-        generation_config=GenerationConfig(
-            audio_timestamp=True
-        )
+        generation_config=GenerateContentConfig(audio_timestamp=True),
     )
     data = DataFrame(
         {
@@ -194,6 +160,7 @@ def test_gemini_with_audio():
 
     assert isinstance(result, DataFrame)
 
+@pytest.mark.skipif(not AUDIO_FOLDER, reason="AUDIO_FOLDER not set")
 def test_load_audio():
     with open(f"{AUDIO_FOLDER}/1.mp3", "rb") as f:
         audio_content = f.read()

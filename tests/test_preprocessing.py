@@ -1,4 +1,3 @@
-import pytest
 import pandas as pd
 from datafarmer.analysis import get_features_info, get_null_proportion
 

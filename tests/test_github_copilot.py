@@ -9,7 +9,7 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 
 def test_github_copilot_basic():
-    copilot = GithubCopilot(model="gpt-4o", github_token=GITHUB_TOKEN)
+    copilot = GithubCopilot(model="openai/gpt-4.1", github_token=GITHUB_TOKEN)
     data = DataFrame(
         {
             "prompt": [
@@ -31,7 +31,7 @@ def test_github_copilot_basic():
 
 def test_github_copilot_with_system_instruction():
     copilot = GithubCopilot(
-        model="gpt-4o",
+        model="openai/gpt-4.1",
         github_token=GITHUB_TOKEN,
         system_instruction="You are a concise assistant. Always answer in one sentence.",
     )

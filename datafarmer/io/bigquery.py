@@ -17,6 +17,14 @@ def is_oauth_set() -> bool:
         return False
 
 
+def _require_credentials() -> None:
+    """Raise if no Google Cloud application default credentials are available."""
+    if not is_oauth_set():
+        raise RuntimeError(
+            "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
+        )
+
+
 def get_oauth_path() -> str:
     """Get the path of the Google Cloud credentials file."""
 
@@ -40,9 +48,7 @@ def get_bigquery_schema(dataset_id: str, project_id: str) -> list[dict]:
         Dict: return a list of dictionary containing table name and its schema
     """
 
-    assert is_oauth_set(), (
-        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
-    )
+    _require_credentials()
 
     client = bigquery.Client(project=project_id)
     schemas = list()
@@ -72,28 +78,34 @@ def read_bigquery(
         DataFrame: dataframe of the query result
     """
 
-    assert is_oauth_set(), (
-        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
-    )
+    _require_credentials()
 
     # check if the return type is valid
-    assert return_type in ["pandas", "polars"], "return type is not valid."
+    if return_type not in ("pandas", "polars"):
+        raise ValueError("return type is not valid.")
 
     client = bigquery.Client(project=project_id)
+    df = client.query(query).to_dataframe()
 
     if return_type == "pandas":
-        return client.query(query).to_dataframe()
-    elif return_type == "polars":
-        return pl.from_pandas(client.query(query).to_dataframe())
+        return df
+    return pl.from_pandas(df)
 
 
 def preview_bigquery(
     query: str,
     project_id: str,
 ) -> str:
-    assert is_oauth_set(), (
-        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
-    )
+    """Estimate how much data a query would scan, without running it (dry run).
+
+    Args:
+        query (str): raw query string
+        project_id (str): project id of the bigquery billing
+
+    Returns:
+        str: estimated bytes processed, e.g. "320 MB" or "1.4 GB"
+    """
+    _require_credentials()
 
     client = bigquery.Client(project=project_id)
 
@@ -131,10 +143,9 @@ def write_bigquery(
         partition_field (str, optional): table partition. Defaults to None.
     """
 
-    assert is_oauth_set(), (
-        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
-    )
-    assert isinstance(df, pd.DataFrame), "data should be a pandas dataframe"
+    _require_credentials()
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError("data should be a pandas dataframe")
 
     client = bigquery.Client(project=project_id)
 
@@ -173,9 +184,7 @@ def get_bigquery_info(project_id: str, dataset_id: str, table_id: str) -> dict:
         google.cloud.exceptions.NotFound: If the specified table does not exist.
         google.api_core.exceptions.GoogleAPIError: For other errors from the BigQuery API.
     """
-    assert is_oauth_set(), (
-        "Google Cloud credentials are not set. please run 'gcloud auth application-default login' to set the credentials."
-    )
+    _require_credentials()
 
     client = bigquery.Client(project=project_id)
 

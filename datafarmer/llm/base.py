@@ -7,9 +7,21 @@ from tqdm.asyncio import tqdm
 from datafarmer.utils import logger
 
 
+def _is_missing(value) -> bool:
+    """True for scalar NaN/None/NA cell values (e.g. an empty optional column)."""
+    return pd.api.types.is_scalar(value) and bool(pd.isna(value))
+
+
+class InvalidResponseError(Exception):
+    """Raised by a provider when the model returned an unusable response (e.g. malformed JSON).
+
+    Treated as retryable, because the model output is non-deterministic.
+    """
+
+
 def _is_retryable_error(exc: BaseException) -> bool:
     """Return True only for errors that are worth retrying (rate limits, server errors, timeouts)."""
-    if isinstance(exc, (TimeoutError, asyncio.TimeoutError)):
+    if isinstance(exc, (TimeoutError, asyncio.TimeoutError, InvalidResponseError)):
         return True
     # openai, anthropic, httpx all expose status_code on API errors
     status_code = getattr(exc, "status_code", None)
@@ -21,11 +33,28 @@ def _is_retryable_error(exc: BaseException) -> bool:
 
 
 class BaseLLM(ABC):
-    def __init__(self, min_wait: int = 2, max_wait: int = 60, max_attempts: int = 3, request_timeout: int = 30):
+    def __init__(
+        self,
+        min_wait: int = 2,
+        max_wait: int = 60,
+        max_attempts: int = 3,
+        request_timeout: int = 30,
+        max_concurrency: int = 32,
+    ):
+        """
+        Args:
+            min_wait (int): minimum seconds between retries (exponential backoff).
+            max_wait (int): maximum seconds between retries.
+            max_attempts (int): maximum number of attempts per prompt.
+            request_timeout (int): per-request timeout in seconds.
+            max_concurrency (int): maximum number of requests in flight at the same time.
+        """
+        assert max_concurrency >= 1, "max_concurrency should be at least 1"
         self.min_wait = min_wait
         self.max_wait = max_wait
         self.max_attempts = max_attempts
         self.request_timeout = request_timeout
+        self.max_concurrency = max_concurrency
 
     @abstractmethod
     async def _generate_single(self, id: str, prompt: str, **kwargs) -> tuple[str, str, bool]:
@@ -61,11 +90,14 @@ class BaseLLM(ABC):
                 wait=wait_exponential(multiplier=1, min=self.min_wait, max=self.max_wait),
                 stop=stop_after_attempt(self.max_attempts),
                 retry=retry_if_exception(_is_retryable_error),
+                reraise=True,
             ):
                 with attempt:
                     return await self._generate_single(id, prompt, **kwargs)
         except Exception as e:
-            logger.warning(f"🚧 All retries failed for id {id}: {str(e)}")
+            logger.warning(
+                f"🚧 Generation failed for id {id} ({type(e).__name__}): {str(e)}"
+            )
             return id, f"Error: {str(e)}", False
 
     async def _run_async_generation(
@@ -80,19 +112,22 @@ class BaseLLM(ABC):
         Returns:
             list[tuple[str, str]]: list of (id, result) pairs for successful generations
         """
-        tasks = [
-            self._get_async_generation_response(
-                id=row.id,
-                prompt=row.prompt,
-                **{
-                    col: getattr(row, col)
-                    for col in data.columns
-                    if col not in ["id", "prompt"]
-                },
-                **kwargs,
-            )
-            for row in data.itertuples()
-        ]
+        semaphore = asyncio.Semaphore(self.max_concurrency)
+
+        async def _bounded(row: dict) -> tuple[str, str, bool]:
+            async with semaphore:
+                return await self._get_async_generation_response(
+                    id=row["id"],
+                    prompt=row["prompt"],
+                    **{
+                        col: value
+                        for col, value in row.items()
+                        if col not in ("id", "prompt") and not _is_missing(value)
+                    },
+                    **kwargs,
+                )
+
+        tasks = [_bounded(row) for row in data.to_dict("records")]
         results = []
 
         with tqdm(total=len(tasks), desc="Generating", unit="Item") as pbar:
@@ -168,14 +203,11 @@ class BaseLLM(ABC):
             pd.DataFrame: dataframe with columns ['id', 'result']
         """
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        else:
-            logger.error("🛑 Use `await generate_async_from_dataframe()` instead")
-            raise RuntimeError("Async event loop is already running")
+            return asyncio.run(
+                self.generate_async_from_dataframe(data, batch_size, **kwargs)
+            )
 
-        return loop.run_until_complete(
-            self.generate_async_from_dataframe(data, batch_size, **kwargs)
-        )
+        logger.error("🛑 Use `await generate_async_from_dataframe()` instead")
+        raise RuntimeError("Async event loop is already running")

@@ -160,25 +160,31 @@ All LLM classes share the same core methods:
 | Method | Description |
 |---|---|
 | `generate_from_dataframe(data)` | Synchronous generation over a DataFrame |
-| `await generate_async_from_dataframe(data)` | Async generation (use inside `async` functions) |
+| `await generate_async_from_dataframe(data)` | Async generation (use inside `async` functions, e.g. Jupyter) |
+
+Requests run concurrently up to `max_concurrency` (default 32). Only rate-limit (429), server (5xx), timeout and malformed-response errors are retried; other failures are logged and the row is omitted from the result.
 
 The input DataFrame must have a `prompt` column. An `id` column is optional — if missing, the row index is used automatically. Any extra columns are passed as `**kwargs` to the underlying provider.
 
 ### Gemini
 
-Wraps Google Gemini via the `google-genai` SDK (default) or the legacy Vertex AI SDK.
+Wraps Google Gemini on Vertex AI via the `google-genai` SDK.
 
-!!! warning "Vertex AI SDK is deprecated"
-    `google_sdk_version="vertex"` uses the legacy Vertex AI SDK, which is deprecated and
-    will be removed in a future release. The default is now `"genai"` (the `google-genai`
-    SDK). New code should use `"genai"`; only pass `"vertex"` for backward compatibility.
+!!! warning "Legacy Vertex AI SDK removed"
+    `google_sdk_version="vertex"` is no longer supported (Google removed the legacy
+    `vertexai.generative_models` SDK) and raises a `ValueError`. Omit the argument or pass
+    `"genai"`. Tools must be `google.genai.types.Tool` objects, e.g. from `VertexRag.get_rag_tool`.
+
+!!! note "Model availability"
+    Gemini 2.5 models are being retired on Vertex AI. The default is now
+    `gemini-3.1-flash-lite`; some newer models are only served from `location="global"`
+    (set it via `client_kwargs`). Check Google's model lifecycle page for your project.
 
 ```python
 from datafarmer.llm import Gemini
 import pandas as pd
 
-# google_sdk_version defaults to "genai"
-gemini = Gemini(project_id="project_id", gemini_version="gemini-2.5-flash-lite")
+gemini = Gemini(project_id="project_id", gemini_version="gemini-3.1-flash-lite")
 
 data = pd.DataFrame({
     "id": ["A", "B", "C"],
@@ -197,7 +203,7 @@ result = gemini.generate_from_dataframe(data)
 ```python
 gemini = Gemini(
     project_id="project_id",
-    gemini_version="gemini-2.5-flash-lite",
+    gemini_version="gemini-3.1-flash-lite",
     system_instruction="You are a helpful assistant. Answer concisely.",
 )
 ```
@@ -217,8 +223,7 @@ class PersonResponse(BaseModel):
 
 gemini = Gemini(
     project_id="project_id",
-    google_sdk_version="genai",
-    gemini_version="gemini-2.5-flash-lite",
+    gemini_version="gemini-3.1-flash-lite",
 )
 
 data = pd.DataFrame({
@@ -240,7 +245,7 @@ result = gemini.generate_from_dataframe(
 
 #### With audio or image files
 
-Add `audio_file_path` or `image_file_path` columns to your DataFrame and they are automatically attached to the request.
+Add `audio_file_path` or `image_file_path` columns to your DataFrame and they are automatically attached to the request. The MIME type is detected from the file extension. Empty cells in these columns are ignored.
 
 ```python
 data = pd.DataFrame({
@@ -260,7 +265,7 @@ result = await gemini.generate_async_from_dataframe(data, batch_size=50)
 
 #### Advanced `google-genai` client config (`client_kwargs`)
 
-When using `google_sdk_version="genai"`, you can forward any keyword argument to the
+You can forward any keyword argument to the
 underlying `genai.Client` via `client_kwargs`. Keys you provide override the defaults
 (`vertexai=True`, `project=project_id`, `location="us-central1"`), so this lets you set a
 custom `location`, `http_options`, `credentials`, `api_key`, and more — without the class
@@ -280,8 +285,7 @@ vertex_ai_creds = genai_creds["vertex_ai_passthrough"]
 
 gemini = Gemini(
     project_id=os.getenv("PROJECT_ID"),
-    google_sdk_version="genai",
-    gemini_version="gemini-2.5-flash-lite",
+    gemini_version="gemini-3.1-flash-lite",
     client_kwargs={
         "location": "global",
         "http_options": HttpOptions(**vertex_ai_creds),
@@ -292,8 +296,7 @@ result = gemini.generate_from_dataframe(data)
 ```
 
 !!! note
-    `client_kwargs` only applies to the `genai` SDK (`google_sdk_version="genai"`). GCP
-    credentials belong in `client_kwargs={"credentials": ...}` — not inside `HttpOptions`,
+    GCP credentials belong in `client_kwargs={"credentials": ...}` — not inside `HttpOptions`,
     which only carries transport options such as `headers`, `base_url`, and `timeout`.
 
 ---
@@ -307,7 +310,7 @@ from datafarmer.llm import Anthropic
 import pandas as pd
 
 anthropic = Anthropic(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5-5",
     system_instruction="You are a helpful data analyst.",
 )
 
@@ -324,24 +327,25 @@ result = anthropic.generate_from_dataframe(data)
 
 | Parameter | Default | Description |
 |---|---|---|
-| `model` | `"claude-sonnet-4-6"` | Anthropic model ID |
+| `model` | `"claude-sonnet-5-5"` | Anthropic model ID |
 | `api_key` | `None` | Falls back to `ANTHROPIC_API_KEY` env var |
 | `system_instruction` | `None` | System prompt |
 | `max_tokens` | `8192` | Max tokens in the response |
 | `max_attempts` | `3` | Retry attempts on rate limits / server errors |
+| `max_concurrency` | `32` | Max simultaneous requests |
 
 ---
 
 ### GithubCopilot
 
-Uses the GitHub Models API (OpenAI-compatible endpoint). Authentication is via a GitHub personal token — fetched automatically from `gh auth token` if not provided.
+Uses the GitHub Models API (OpenAI-compatible endpoint, `https://models.github.ai/inference`; configurable with `base_url`). Also exported as `GitHubModels`. Authentication is via a GitHub personal token — fetched automatically from `gh auth token` if not provided.
 
 ```python
 from datafarmer.llm import GithubCopilot
 import pandas as pd
 
 copilot = GithubCopilot(
-    model="gpt-4o",
+    model="openai/gpt-4.1",
     system_instruction="You are a Python coding assistant.",
 )
 
@@ -364,10 +368,11 @@ result = copilot.generate_from_dataframe(data)
 
 | Parameter | Default | Description |
 |---|---|---|
-| `model` | `"gpt-4o"` | Model name on GitHub Models |
+| `model` | `"openai/gpt-4.1"` | Model ID on GitHub Models (`publisher/model`) |
 | `github_token` | `None` | Falls back to `gh auth token` |
 | `system_instruction` | `None` | System prompt |
 | `max_attempts` | `3` | Retry attempts on rate limits / server errors |
+| `max_concurrency` | `32` | Max simultaneous requests |
 
 ---
 
@@ -386,7 +391,7 @@ rag = VertexRag(project_id="project_id")
 ```python
 corpus = rag.set_corpus(
     display_name="my-knowledge-base",
-    embedding_model="text-embedding-004",
+    embedding_model="gemini-embedding-001",
 )
 corpus_name = corpus.name
 ```
@@ -431,7 +436,7 @@ rag_tool = rag.get_rag_tool(
 
 gemini = Gemini(
     project_id="project_id",
-    gemini_version="gemini-2.5-flash-lite",
+    gemini_version="gemini-3.1-flash-lite",
     tools=[rag_tool],
 )
 ```

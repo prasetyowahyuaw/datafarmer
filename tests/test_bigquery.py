@@ -1,11 +1,9 @@
-import pytest
 from datafarmer.io import read_bigquery, is_oauth_set, write_bigquery, get_bigquery_schema, preview_bigquery, get_bigquery_info
 import pandas as pd
 import polars as pl
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-import json
 
 load_dotenv()
 
