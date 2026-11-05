@@ -6,7 +6,7 @@ load_dotenv()
 
 
 def test_anthropic_basic():
-    anthropic = Anthropic(model="claude-haiku-4-5-20251001")
+    anthropic = Anthropic(model="claude-haiku-5-5")
     data = DataFrame(
         {
             "prompt": [
@@ -28,7 +28,7 @@ def test_anthropic_basic():
 
 def test_anthropic_with_system_instruction():
     anthropic = Anthropic(
-        model="claude-haiku-4-5-20251001",
+        model="claude-haiku-5-5",
         system_instruction="You are a concise assistant. Always answer in one sentence.",
     )
     data = DataFrame(

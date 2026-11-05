@@ -1,22 +1,15 @@
-import vertexai
-from vertexai.generative_models import (
-    GenerativeModel,
-    GenerationConfig,
-    SafetySetting,
-    Tool,
-    Part,
-)
-from google import genai
-from google.genai.types import GenerateContentConfig
-
-from typing import Optional
-from datafarmer.utils import logger
-from datafarmer.llm.base import BaseLLM
+import asyncio
 import json
+import mimetypes
+from typing import Optional, Union
 
-import warnings
+from google import genai
+from google.genai import types
 
-warnings.filterwarnings("ignore")
+from datafarmer.llm.base import BaseLLM, InvalidResponseError
+from datafarmer.utils import logger
+
+_DEFAULT_MIME = dict(audio="audio/mpeg", image="image/jpeg")
 
 
 class Gemini(BaseLLM):
@@ -24,44 +17,52 @@ class Gemini(BaseLLM):
         self,
         project_id: str,
         google_sdk_version: str = "genai",
-        gemini_version: str = "gemini-2.5-flash-lite",
-        generation_config: GenerationConfig | GenerateContentConfig = None,
-        safety_settings: Optional[SafetySetting] = None,
+        gemini_version: str = "gemini-3.1-flash-lite",
+        generation_config: Union[types.GenerateContentConfig, dict, None] = None,
+        safety_settings: Optional[list[types.SafetySetting]] = None,
         system_instruction: Optional[str] = None,
-        tools: Optional[Tool] = None,
+        tools: Optional[list[types.Tool]] = None,
         min_wait: int = 10,
         max_wait: int = 60,
         max_attempts: int = 3,
         request_timeout: int = 60,
         client_kwargs: Optional[dict] = None,
+        max_concurrency: int = 32,
     ):
-        """Initialize the Gemini class.
+        """Initialize the Gemini class (backed by the ``google-genai`` SDK on Vertex AI).
 
         Args:
             project_id (str): google project id
-            google_sdk_version (str, optional): google sdk version, there is vertex and genai. Defaults to "genai".
-                Note: "vertex" (the legacy Vertex AI SDK) is deprecated — prefer "genai".
-            gemini_version (str, optional): gemini version. Defaults to "gemini-2.5-flash-lite".
-            generation_config (Optional[GenerationConfig], optional): generation config. Defaults to None.
-            safety_settings (Optional[SafetySetting], optional): gemini generation safety settings. Defaults to None.
-            system_instruction (Optional[str], optional): initial instruction in gemini. Defaults to None.
-            tools (Optional[Tool], optional): tool for the generation. Defaults to None.
+            google_sdk_version (str, optional): kept for backward compatibility. Only "genai" is
+                supported; the legacy Vertex AI SDK ("vertex") was removed by Google.
+            gemini_version (str, optional): gemini model name. Defaults to "gemini-3.1-flash-lite".
+            generation_config (Union[GenerateContentConfig, dict], optional): generation config. Defaults to None.
+            safety_settings (list[SafetySetting], optional): gemini safety settings. Defaults to None.
+            system_instruction (Optional[str], optional): system instruction. Defaults to None.
+            tools (list[Tool], optional): tools for the generation (e.g. from ``VertexRag.get_rag_tool``).
             min_wait (int, optional): minimum seconds between retries (exponential backoff). Defaults to 10.
             max_wait (int, optional): maximum seconds between retries. Defaults to 60.
-            max_attempts (int, optional): maximum number of retry attempts. Defaults to 3.
+            max_attempts (int, optional): maximum number of attempts per prompt. Defaults to 3.
             request_timeout (int, optional): per-request timeout in seconds. Defaults to 60.
             client_kwargs (Optional[dict], optional): extra keyword arguments forwarded to
                 ``genai.Client`` (e.g. ``location``, ``http_options``, ``credentials``,
-                ``api_key``). Only used when ``google_sdk_version='genai'``. Keys here override
-                the defaults (``vertexai=True``, ``project=project_id``, ``location='us-central1'``).
-                Defaults to None.
+                ``api_key``). Keys here override the defaults (``vertexai=True``,
+                ``project=project_id``, ``location='us-central1'``). Defaults to None.
+            max_concurrency (int, optional): maximum simultaneous requests. Defaults to 32.
         """
-        super().__init__(min_wait=min_wait, max_wait=max_wait, max_attempts=max_attempts, request_timeout=request_timeout)
+        super().__init__(
+            min_wait=min_wait,
+            max_wait=max_wait,
+            max_attempts=max_attempts,
+            request_timeout=request_timeout,
+            max_concurrency=max_concurrency,
+        )
 
-        assert google_sdk_version in [
-            "genai",
-            "vertex",
-        ], "google_sdk_version should be either 'genai' or 'vertex'"
+        if google_sdk_version != "genai":
+            raise ValueError(
+                "google_sdk_version='vertex' is no longer supported: the legacy Vertex AI "
+                "generative SDK was removed by Google. Use 'genai' (the default)."
+            )
 
         self.gemini_version = gemini_version
         self.google_sdk_version = google_sdk_version
@@ -72,32 +73,19 @@ class Gemini(BaseLLM):
         self.tools = tools
         self.client_kwargs = client_kwargs or {}
 
-        match self.google_sdk_version:
-            case "vertex":
-                vertexai.init(project=project_id)
-
-                self.generative_model = GenerativeModel(
-                    model_name=self.gemini_version,
-                    generation_config=self.generation_config,
-                    safety_settings=self.safety_settings,
-                    system_instruction=self.system_instruction,
-                    tools=self.tools,
-                )
-
-            case "genai":
-                client_kwargs = {
-                    "vertexai": True,
-                    "project": self.project_id,
-                    "location": "us-central1",
-                }
-                client_kwargs.update(self.client_kwargs)
-                self.client = genai.Client(**client_kwargs)
+        client_kwargs = {
+            "vertexai": True,
+            "project": self.project_id,
+            "location": "us-central1",
+        }
+        client_kwargs.update(self.client_kwargs)
+        self.client = genai.Client(**client_kwargs)
 
     @staticmethod
     def _get_binary_file_part(
         file_path: str, file_type: str = "audio", *args, **kwargs
-    ) -> Part:
-        """Return the Part Class from the given file.
+    ) -> types.Part:
+        """Return a Part from the given file.
 
         Args:
             file_path (str): the file path
@@ -107,20 +95,38 @@ class Gemini(BaseLLM):
             "type should be either 'audio' or 'image'"
         )
 
-        mime = dict(
-            audio="audio/mp3",
-            image="image/jpeg",
-        )
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if mime_type is None or not mime_type.startswith(f"{file_type}/"):
+            mime_type = _DEFAULT_MIME[file_type]
 
         with open(file_path, "rb") as f:
             binary = f.read()
 
-        file_part = Part.from_data(
-            mime_type=mime.get(file_type),
-            data=binary,
-        )
         logger.info(f"📦 Loaded {file_type} file from {file_path}")
-        return file_part
+        return types.Part.from_bytes(data=binary, mime_type=mime_type)
+
+    def _build_config(
+        self, generation_config: Union[types.GenerateContentConfig, dict, None]
+    ) -> types.GenerateContentConfig:
+        """Merge the per-call generation config with the instance-level defaults."""
+        if generation_config is None:
+            generation_config = self.generation_config
+
+        if generation_config is None:
+            config = types.GenerateContentConfig()
+        elif isinstance(generation_config, dict):
+            config = types.GenerateContentConfig(**generation_config)
+        else:
+            config = generation_config.model_copy()
+
+        if self.system_instruction and config.system_instruction is None:
+            config.system_instruction = self.system_instruction
+        if self.safety_settings and config.safety_settings is None:
+            config.safety_settings = self.safety_settings
+        if self.tools and config.tools is None:
+            config.tools = self.tools
+
+        return config
 
     async def _generate_single(
         self, id: str, prompt: str, **kwargs
@@ -135,55 +141,35 @@ class Gemini(BaseLLM):
         Returns:
             tuple[str, str, bool]: (id, response_text, is_succeeded)
         """
+        config = self._build_config(kwargs.get("generation_config"))
         contents = [prompt]
-        generation_config = (
-            self.generation_config
-            if kwargs.get("generation_config") is None
-            else kwargs.get("generation_config")
+
+        if kwargs.get("audio_file_path"):
+            contents.append(
+                self._get_binary_file_part(kwargs["audio_file_path"], file_type="audio")
+            )
+        if kwargs.get("image_file_path"):
+            contents.append(
+                self._get_binary_file_part(kwargs["image_file_path"], file_type="image")
+            )
+
+        response = await asyncio.wait_for(
+            self.client.aio.models.generate_content(
+                model=kwargs.get("model") or self.gemini_version,
+                contents=contents,
+                config=config,
+            ),
+            timeout=self.request_timeout,
         )
 
-        for key, value in kwargs.items():
-            if key == "audio_file_path":
-                audio_part = self._get_binary_file_part(
-                    file_path=value, file_type="audio"
-                )
-                contents.append(audio_part)
-            elif key == "image_file_path":
-                image_part = self._get_binary_file_part(
-                    file_path=value, file_type="image"
-                )
-                contents.append(image_part)
+        text = response.text
+        if text is None:
+            raise InvalidResponseError(f"Empty response from model, Id: {id}")
 
-        match self.google_sdk_version:
-            case "vertex":
-                response = await self.generative_model.generate_content_async(
-                    contents,
-                    generation_config=generation_config,
-                    safety_settings=self.safety_settings,
-                    stream=False,
-                )
-
-            case "genai":
-                response = await self.client.aio.models.generate_content(
-                    model=kwargs.get("model", self.gemini_version),
-                    contents=prompt,
-                    config=generation_config,
-                )
-
-        response = response.text
-
-        is_json_response = (
-            isinstance(generation_config, GenerateContentConfig)
-            and generation_config.response_mime_type == "application/json"
-        ) or (
-            isinstance(generation_config, dict)
-            and generation_config.get("response_mime_type") == "application/json"
-        )
-
-        if is_json_response:
+        if config.response_mime_type == "application/json":
             try:
-                json.loads(response)
+                json.loads(text)
             except Exception:
-                raise ValueError(f"Failed to parse JSON response, Id: {id}")
+                raise InvalidResponseError(f"Failed to parse JSON response, Id: {id}")
 
-        return id, response, True
+        return id, text, True

@@ -1,4 +1,3 @@
-import os
 import pytest
 from datafarmer.io import read_text, read_yaml
 
