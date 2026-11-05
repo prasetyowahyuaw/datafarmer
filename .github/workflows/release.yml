@@ -25,9 +25,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # No dependency cache here: on the "tag already exists" path uv is never
+      # used, and the cache post-step then fails with "cache path does not exist".
       - uses: astral-sh/setup-uv@v6
         with:
-          enable-cache: true
+          enable-cache: false
           python-version: "3.12"
 
       - name: Read version
